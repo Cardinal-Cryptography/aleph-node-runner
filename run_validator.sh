@@ -1,0 +1,96 @@
+#!/bin/bash
+
+Help()
+{
+    echo "Run the aleph-node as validator."
+    echo
+    echo "Syntax: run_validator.sh [-n|m||i|b|h]"
+    echo "options:"
+    echo "n | name        Set the node's name."
+    echo "m | mainnet     Join the mainnet (by default the script will join testnet)."
+    echo "i | image       Specify the Docker image to use"
+    echo "r | release     Set the version/release tag to use."
+    echo "b | build_only  Do not run after the setup."
+    echo "h | help     Print this Help."
+    echo
+    echo "Example usage:"
+    echo "./run_validator.sh --name my-aleph-node --mainnet --release r-5.1"
+    echo
+    echo "or, shorter:"
+    echo "./run_validator.sh --n my-aleph-node -m --r r-5.1"
+    echo
+}
+
+
+# The defaults
+NAME="aleph-node-$(whoami)"
+BASE_PATH="/data"
+ALEPH_VERSION="r-5.1"
+DB_SNAPSHOT_FILE="db_backup_2022-04-07-14-33-26.tar.gz"
+DB_SNAPSHOT_URL="https://db-chain-backup-testnet.s3.eu-central-1.amazonaws.com/2022-04-07/${DB_SNAPSHOT_FILE}"
+MAINNET_DB_SNAPSHOT_URL_BASE="https://db-chain-exchange-bucket.s3.ap-northeast-1.amazonaws.com/2022-02-25/"
+DB_SNAPSHOT_PATH="chains/a0tnet1/"     # testnet by default
+CHAINSPEC_FILE="testnet_chainspec.json"
+
+
+while getopts h:n:m:p:i:r:b:-: OPT; do
+    if [ "$OPT" = "-" ]; then   # long option: reformulate OPT and OPTARG
+        OPT="${OPTARG%%=*}"       # extract long option name
+        OPTARG="${OPTARG#$OPT}"   # extract long option argument (may be empty)
+        OPTARG="${OPTARG#=}"      # if long option argument, remove assigning `=`
+    fi
+    echo ""
+    case "$OPT" in
+        h | help) # display Help
+            Help
+            exit;;
+        n | name) # Enter a name
+            NAME=$OPTARG;;
+        m | mainnet) # Join the mainnet
+            DB_SNAPSHOT_PATH="chains/mainnet/"
+            CHAINSPEC_FILE="mainnet_chainspec.json"
+            DB_SNAPSHOT_FILE="db_chain_backup.tar.gz"
+            DB_SNAPSHOT_URL="${MAINNET_DB_SNAPSHOT_URL_BASE}/${DB_SNAPSHOT_FILE}";;
+        i | image) # Enter a base path
+            ALEPH_IMAGE=$OPTARG
+            PULL_IMAGE=false;;
+        r | release) # Enter a release
+            ALEPH_VERSION=$OPTARG;;
+        b | build_only)
+            BUILD_ONLY=true;;
+        *) # Invalid option
+            echo "Error: Invalid option"
+            Help
+            exit;;
+  esac
+done
+
+echo "NAME: $NAME"
+
+eval "echo \"$(cat env/validator)\"" > env/validator.env
+mkdir -p ${DB_SNAPSHOT_PATH}
+
+if [ ! -f ${DB_SNAPSHOT_PATH}/${DB_SNAPSHOT_FILE} ]
+then
+    pushd ${DB_SNAPSHOT_PATH}
+    wget $DB_SNAPSHOT_URL
+    tar xvzf ${DB_SNAPSHOT_FILE}
+    popd
+fi
+
+if [ ! -f chainspec.json ]
+then
+    wget -O chainspec.json https://raw.githubusercontent.com/Cardinal-Cryptography/aleph-node/main/bin/node/src/resources/${CHAINSPEC_FILE}
+fi
+
+if [ -z "$ALEPH_IMAGE" ]
+then
+   ALEPH_IMAGE=public.ecr.aws/p6e8q1z1/aleph-node:${ALEPH_VERSION}
+   docker pull $ALEPH_IMAGE
+fi
+
+if [ -z "$BUILD_ONLY" ]
+then
+    docker run --env-file ./env/validator.env --mount type=bind,source=$(pwd),target=/data $ALEPH_IMAGE
+fi
+
