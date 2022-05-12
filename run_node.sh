@@ -2,10 +2,11 @@
 
 Help()
 {
-    echo "Run the aleph-node as validator."
+    echo "Run the aleph-node as either a validator or an archivist."
     echo
-    echo "Syntax: run_validator.sh [-n|m||i|b|h]"
+    echo "Syntax: run_node.sh [-a|n|m||i|b|h]"
     echo "options:"
+    echo "a | archivist   Run the node as an archivist (the default is to run as a validator)"
     echo "n | name        Set the node's name."
     echo "m | mainnet     Join the mainnet (by default the script will join testnet)."
     echo "i | image       Specify the Docker image to use"
@@ -14,10 +15,10 @@ Help()
     echo "h | help     Print this Help."
     echo
     echo "Example usage:"
-    echo "./run_validator.sh --name my-aleph-node --mainnet --release r-5.1"
+    echo "./run_node.sh --name my-aleph-node --mainnet --release r-5.1"
     echo
     echo "or, shorter:"
-    echo "./run_validator.sh --n my-aleph-node -m --r r-5.1"
+    echo "./run_node.sh --n my-aleph-node -m --r r-5.1"
     echo
 }
 
@@ -44,6 +45,8 @@ while getopts h:n:m:p:i:r:b:-: OPT; do
         h | help) # display Help
             Help
             exit;;
+        a | archivist) # Run as an archivist
+            ARCHIVIST=true;;
         n | name) # Enter a name
             NAME=$OPTARG;;
         m | mainnet) # Join the mainnet
@@ -67,13 +70,21 @@ done
 
 echo "NAME: $NAME"
 
-eval "echo \"$(cat env/validator)\"" > env/validator.env
+if [ -z "$ARCHIVIST" ]
+then
+    eval "echo \"$(cat env/validator)\"" > env/validator.env
+    ENV_FILE="./env/validator.env"
+else
+    eval "echo \"$(cat env/archivist)\"" > env/archivist.env
+    ENV_FILE="./env/archivist.env"
+fi
+
 mkdir -p ${DB_SNAPSHOT_PATH}
 
 if [ ! -f ${DB_SNAPSHOT_PATH}/${DB_SNAPSHOT_FILE} ]
 then
     pushd ${DB_SNAPSHOT_PATH}
-    wget $DB_SNAPSHOT_URL
+    wget ${DB_SNAPSHOT_URL}
     tar xvzf ${DB_SNAPSHOT_FILE}
     popd
 fi
@@ -86,11 +97,11 @@ fi
 if [ -z "$ALEPH_IMAGE" ]
 then
    ALEPH_IMAGE=public.ecr.aws/p6e8q1z1/aleph-node:${ALEPH_VERSION}
-   docker pull $ALEPH_IMAGE
+   docker pull ${ALEPH_IMAGE}
 fi
 
 if [ -z "$BUILD_ONLY" ]
 then
-    docker run --env-file ./env/validator.env --mount type=bind,source=$(pwd),target=/data $ALEPH_IMAGE
+    docker run --env-file ${ENV_FILE} --mount type=bind,source=$(pwd),target=/data ${ALEPH_IMAGE}
 fi
 
