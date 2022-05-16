@@ -21,7 +21,7 @@ Once inside the `aleph-node-runner` folder, run:
 ./run_node.sh --name <your_nodes_name>
 ```
 
-It might take quite some time before you actually get the node running: the script will first download required files, including a database snapshot (sized ~100GB). It will then run the node for you and you should start seeing some block-related output.
+It might take quite some time before you actually get the node running: the script will first download required files, including a database snapshot (sized ~100GB). You can alternatively skip this step by providing the `--skip` flag (see the 'Additional Options' section). The script will then run the node for you and you should start seeing some block-related output.
 
 > 💡 The choice of <code>your_nodes_name</code> is entirely up to you but for the sake of more comprehensible logs please try using something unique and memorable.
 
@@ -34,3 +34,15 @@ The default is to run the node as a validator. Should you choose to run as an ar
 ```
 
 > 💡 To run as an archivist, you will need additional network config [TODO].
+
+## Additional options
+
+The script allows you to customize the run in several ways, as listed below.
+
+* `--mainnet`: join the Aleph Mainnet instead of the default Testnet
+* `--sync`: by providing this option, you're choosing not to download and use a DB snapshot, but rather perform a full sync
+* `--release`: this allows you to specify a version of the Aleph Node binary: either a release tag (like `r-5.2`) or a short commit hash
+* `--build_only`: the script will only download and setup everything but will not actually run the binary in case you don't want to join the network yet
+* `--image`: you can provide the name and tag of your own Aleph Node image in case you don't want to use one from the official image repository
+* `--archivist`: (as described above) run the node as an archivist instead of a validator
+* `--name`: (as described above) provide the name of the node. If you omit this option, one will be generated for you but it's not encouraged.
