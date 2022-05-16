@@ -27,10 +27,11 @@ Help()
 # The defaults
 NAME="aleph-node-$(whoami)"
 BASE_PATH="/data"
-ALEPH_VERSION="r-5.1"
-DB_SNAPSHOT_FILE="db_backup_2022-04-07-14-33-26.tar.gz"
-DB_SNAPSHOT_URL="https://db-chain-backup-testnet.s3.eu-central-1.amazonaws.com/2022-04-07/${DB_SNAPSHOT_FILE}"
-MAINNET_DB_SNAPSHOT_URL_BASE="https://db-chain-exchange-bucket.s3.ap-northeast-1.amazonaws.com/2022-02-25/"
+ALEPH_VERSION="r-5.2"
+DATE=$(date -d "yesterday" '+%Y-%m-%d')  # yesterday's date to make sure the snapshot is already uploaded (it happens once a day)
+DB_SNAPSHOT_FILE="db_backup_${DATE}.tar.gz"
+DB_SNAPSHOT_URL="https://db.test.azero.dev/${DATE}/${DB_SNAPSHOT_FILE}"
+MAINNET_DB_SNAPSHOT_URL_BASE="https://db-chain-exchange-bucket.s3.ap-northeast-1.amazonaws.com/${DATE}/"
 DB_SNAPSHOT_PATH="chains/a0tnet1/"     # testnet by default
 CHAINSPEC_FILE="testnet_chainspec.json"
 
