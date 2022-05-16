@@ -12,6 +12,7 @@ Help()
     echo "i | image       Specify the Docker image to use"
     echo "r | release     Set the version/release tag to use."
     echo "b | build_only  Do not run after the setup."
+    echo "s | sync        Perform a full sync instead of downloading the backup"
     echo "h | help     Print this Help."
     echo
     echo "Example usage:"
@@ -61,14 +62,14 @@ while getopts h:n:m:p:i:r:b:-: OPT; do
             ALEPH_VERSION=$OPTARG;;
         b | build_only)
             BUILD_ONLY=true;;
+        s | sync)
+            SYNC=true;;
         *) # Invalid option
             echo "Error: Invalid option"
             Help
             exit;;
   esac
 done
-
-echo "NAME: $NAME"
 
 if [ -z "$ARCHIVIST" ]
 then
@@ -81,7 +82,7 @@ fi
 
 mkdir -p ${DB_SNAPSHOT_PATH}
 
-if [ ! -f ${DB_SNAPSHOT_PATH}/${DB_SNAPSHOT_FILE} ]
+if [ ! -f ${DB_SNAPSHOT_PATH}/${DB_SNAPSHOT_FILE} ] && [ -z "SYNC" ]
 then
     pushd ${DB_SNAPSHOT_PATH}
     wget ${DB_SNAPSHOT_URL}
@@ -102,6 +103,6 @@ fi
 
 if [ -z "$BUILD_ONLY" ]
 then
-    docker run --env-file ${ENV_FILE} --mount type=bind,source=$(pwd),target=/data ${ALEPH_IMAGE}
+    docker run --env-file ${ENV_FILE} -p 9933:9933 -p 9944:9944 -p 30333:30333  --mount type=bind,source=$(pwd),target=/data ${ALEPH_IMAGE}
 fi
 
