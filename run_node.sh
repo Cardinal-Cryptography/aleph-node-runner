@@ -37,7 +37,7 @@ DB_SNAPSHOT_PATH="chains/testnet/"     # testnet by default
 CHAINSPEC_FILE="testnet_chainspec.json"
 
 
-while getopts h:n:m:p:i:r:b:e:s:-: OPT; do
+while getopts h:a:n:m:p:i:r:b:e:s:-: OPT; do
     if [ "$OPT" = "-" ]; then   # long option: reformulate OPT and OPTARG
         OPT="${OPTARG%%=*}"       # extract long option name
         OPTARG="${OPTARG#$OPT}"   # extract long option argument (may be empty)
