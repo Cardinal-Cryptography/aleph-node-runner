@@ -6,14 +6,15 @@ Help()
     echo
     echo "Syntax: run_node.sh [-a|n|m||i|b|h]"
     echo "options:"
-    echo "a | archivist   Run the node as an archivist (the default is to run as a validator)"
-    echo "n | name        Set the node's name."
-    echo "m | mainnet     Join the mainnet (by default the script will join testnet)."
-    echo "i | image       Specify the Docker image to use"
-    echo "r | release     Set the version/release tag to use."
-    echo "b | build_only  Do not run after the setup."
-    echo "s | sync        Perform a full sync instead of downloading the backup"
-    echo "h | help     Print this Help."
+    echo "a | archivist    Run the node as an archivist (the default is to run as a validator)"
+    echo "n | name         Set the node's name."
+    echo "m | mainnet      Join the mainnet (by default the script will join testnet)."
+    echo "i | image        Specify the Docker image to use"
+    echo "r | release      Set the version/release tag to use."
+    echo "b | build_only   Do not run after the setup."
+    echo "e | execute_only Assume that everything is set up and only run the container."
+    echo "s | sync         Perform a full sync instead of downloading the backup"
+    echo "h | help         Print this Help."
     echo
     echo "Example usage:"
     echo "./run_node.sh --name my-aleph-node --mainnet --release r-5.1"
@@ -36,7 +37,7 @@ DB_SNAPSHOT_PATH="chains/testnet/"     # testnet by default
 CHAINSPEC_FILE="testnet_chainspec.json"
 
 
-while getopts h:n:m:p:i:r:b:-: OPT; do
+while getopts h:n:m:p:i:r:b:e:s:-: OPT; do
     if [ "$OPT" = "-" ]; then   # long option: reformulate OPT and OPTARG
         OPT="${OPTARG%%=*}"       # extract long option name
         OPTARG="${OPTARG#$OPT}"   # extract long option argument (may be empty)
@@ -63,6 +64,8 @@ while getopts h:n:m:p:i:r:b:-: OPT; do
             ALEPH_VERSION=$OPTARG;;
         b | build_only)
             BUILD_ONLY=true;;
+        e | execute_only)
+            EXECUTE_ONLY=true;;
         s | sync)
             SYNC=true;;
         *) # Invalid option
@@ -72,30 +75,24 @@ while getopts h:n:m:p:i:r:b:-: OPT; do
   esac
 done
 
-if [ -z "$ARCHIVIST" ]
+if [ -z "$EXECUTE_ONLY" ]
 then
-    eval "echo \"$(cat env/validator)\"" > env/validator.env
-    ENV_FILE="./env/validator.env"
-else
-    eval "echo \"$(cat env/archivist)\"" > env/archivist.env
-    ENV_FILE="./env/archivist.env"
-fi
+    mkdir -p ${DB_SNAPSHOT_PATH}
 
-mkdir -p ${DB_SNAPSHOT_PATH}
+    if [ ! -f ${DB_SNAPSHOT_PATH}/${DB_SNAPSHOT_FILE} ] && [ -z "$SYNC" ]
+    then
+        echo "Downloading the snapshot..."
+        pushd ${DB_SNAPSHOT_PATH}
+        wget ${DB_SNAPSHOT_URL}
+        tar xvzf ${DB_SNAPSHOT_FILE}
+        popd
+    fi
 
-if [ ! -f ${DB_SNAPSHOT_PATH}/${DB_SNAPSHOT_FILE} ] && [ -z "$SYNC" ]
-then
-    echo "Downloading the snapshot..."
-    pushd ${DB_SNAPSHOT_PATH}
-    wget ${DB_SNAPSHOT_URL}
-    tar xvzf ${DB_SNAPSHOT_FILE}
-    popd
-fi
-
-if [ ! -f chainspec.json ]
-then
-    echo "Downloading the chainspec..."
-    wget -O chainspec.json https://raw.githubusercontent.com/Cardinal-Cryptography/aleph-node/main/bin/node/src/resources/${CHAINSPEC_FILE}
+    if [ ! -f chainspec.json ]
+    then
+        echo "Downloading the chainspec..."
+        wget -O chainspec.json https://raw.githubusercontent.com/Cardinal-Cryptography/aleph-node/main/bin/node/src/resources/${CHAINSPEC_FILE}
+    fi
 fi
 
 if [ -z "$ALEPH_IMAGE" ]
@@ -108,6 +105,14 @@ fi
 if [ -z "$BUILD_ONLY" ]
 then
     echo "Running the node..."
-    docker run --env-file ${ENV_FILE} -p 9933:9933 -p 9944:9944 -p 30333:30333  --mount type=bind,source=$(pwd),target=/data ${ALEPH_IMAGE}
+    if [ -z "$ARCHIVIST" ]
+    then
+        eval "echo \"$(cat env/validator)\"" > env/validator.env
+        docker run --env-file env/validator.env -p "127.0.0.1:9933:9933" -p "127.0.0.1:9944:9944" -p 30333:30333 --mount type=bind,source=$(pwd),target=/data ${ALEPH_IMAGE}
+    else
+        eval "echo \"$(cat env/archivist)\"" > env/archivist.env
+        docker run --env-file env/archivist.env -p 9933:9933 -p 9944:9944 -p 30333:30333 --mount type=bind,source=$(pwd),target=/data ${ALEPH_IMAGE}
+    fi
+
 fi
 
