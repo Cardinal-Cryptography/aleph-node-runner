@@ -83,8 +83,9 @@ fi
 
 mkdir -p ${DB_SNAPSHOT_PATH}
 
-if [ ! -f ${DB_SNAPSHOT_PATH}/${DB_SNAPSHOT_FILE} ] && [ -z "SYNC" ]
+if [ ! -f ${DB_SNAPSHOT_PATH}/${DB_SNAPSHOT_FILE} ] && [ -z "$SYNC" ]
 then
+    echo "Downloading the snapshot..."
     pushd ${DB_SNAPSHOT_PATH}
     wget ${DB_SNAPSHOT_URL}
     tar xvzf ${DB_SNAPSHOT_FILE}
@@ -93,17 +94,20 @@ fi
 
 if [ ! -f chainspec.json ]
 then
+    echo "Downloading the chainspec..."
     wget -O chainspec.json https://raw.githubusercontent.com/Cardinal-Cryptography/aleph-node/main/bin/node/src/resources/${CHAINSPEC_FILE}
 fi
 
 if [ -z "$ALEPH_IMAGE" ]
 then
-   ALEPH_IMAGE=public.ecr.aws/p6e8q1z1/aleph-node:${ALEPH_VERSION}
-   docker pull ${ALEPH_IMAGE}
+    echo "Pulling docker image..."
+    ALEPH_IMAGE=public.ecr.aws/p6e8q1z1/aleph-node:${ALEPH_VERSION}
+    docker pull ${ALEPH_IMAGE}
 fi
 
 if [ -z "$BUILD_ONLY" ]
 then
+    echo "Running the node..."
     docker run --env-file ${ENV_FILE} -p 9933:9933 -p 9944:9944 -p 30333:30333  --mount type=bind,source=$(pwd),target=/data ${ALEPH_IMAGE}
 fi
 
