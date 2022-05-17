@@ -1,0 +1,9 @@
+p2p_secret
+env/archivist.env
+env/validator.env
+chains/mainnet/db
+chains/mainnet/keystore
+chains/mainnet/network
+chains/testnet/db
+chains/testnet/keystore
+chains/testnet/network

@@ -32,7 +32,7 @@ DATE=$(date -d "yesterday" '+%Y-%m-%d')  # yesterday's date to make sure the sna
 DB_SNAPSHOT_FILE="db_backup_${DATE}.tar.gz"
 DB_SNAPSHOT_URL="https://db.test.azero.dev/${DATE}/${DB_SNAPSHOT_FILE}"
 MAINNET_DB_SNAPSHOT_URL_BASE="https://db-chain-exchange-bucket.s3.ap-northeast-1.amazonaws.com/${DATE}/"
-DB_SNAPSHOT_PATH="chains/a0tnet1/"     # testnet by default
+DB_SNAPSHOT_PATH="chains/testnet/"     # testnet by default
 CHAINSPEC_FILE="testnet_chainspec.json"
 
 
