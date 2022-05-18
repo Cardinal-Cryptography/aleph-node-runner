@@ -14,6 +14,7 @@ Help()
     echo "execute_only   Assume that everything is set up and only run the container."
     echo "container_name The name of the Docker container that will be run."
     echo "sync           Perform a full sync instead of downloading the backup."
+    echo "background     Run the container in detached mode."
     echo "help           Print this help."
     echo
     echo "Example usage:"
@@ -71,6 +72,8 @@ while getopts h:a:n:m:p:i:r:b:e:s:-: OPT; do
             SYNC=true;;
         container_name)
             CONTAINER_NAME=$OPTARG;;
+        background)
+            DETACHED=true;;
         *) # Invalid option
             echo "Error: Invalid option"
             Help
@@ -110,12 +113,17 @@ then
     echo "Running the node..."
     if [ -z "$ARCHIVIST" ]
     then
+        RPC_PORT="127.0.0.1:9933:9933"
+        WS_PORT="127.0.0.1:9944:9944"
         eval "echo \"$(cat env/validator)\"" > env/validator.env
-        docker run --env-file env/validator.env -p "127.0.0.1:9933:9933" -p "127.0.0.1:9944:9944" -p 30333:30333 --mount type=bind,source=$(pwd),target=/data --name ${CONTAINER_NAME} ${ALEPH_IMAGE}
+        ENV_FILE="env/validator.env"
     else
+        RPC_PORT="9933:9933"
+        WS_PORT="9944:9944"
         eval "echo \"$(cat env/archivist)\"" > env/archivist.env
-        docker run --env-file env/archivist.env -p 9933:9933 -p 9944:9944 -p 30333:30333 --mount type=bind,source=$(pwd),target=/data --name ${CONTAINER_NAME} ${ALEPH_IMAGE}
+        ENV_FILE="env/archivist.env"
     fi
 
+    docker run --env-file ${ENV_FILE} -p ${RPC_PORT} -p ${WS_PORT} -p 30333:30333 --mount type=bind,source=$(pwd),target=/data --name ${CONTAINER_NAME} ${DETACHED:+"-d"} ${ALEPH_IMAGE}
 fi
 
