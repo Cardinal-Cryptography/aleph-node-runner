@@ -4,23 +4,23 @@ Help()
 {
     echo "Run the aleph-node as either a validator or an archivist."
     echo
-    echo "Syntax: run_node.sh [-a|n|m||i|b|h]"
     echo "options:"
-    echo "a | archivist    Run the node as an archivist (the default is to run as a validator)"
-    echo "n | name         Set the node's name."
-    echo "m | mainnet      Join the mainnet (by default the script will join testnet)."
-    echo "i | image        Specify the Docker image to use"
-    echo "r | release      Set the version/release tag to use."
-    echo "b | build_only   Do not run after the setup."
-    echo "e | execute_only Assume that everything is set up and only run the container."
-    echo "s | sync         Perform a full sync instead of downloading the backup"
-    echo "h | help         Print this Help."
+    echo "archivist      Run the node as an archivist (the default is to run as a validator)"
+    echo "n | name       Set the node's name."
+    echo "mainnet        Join the mainnet (by default the script will join testnet)."
+    echo "i | image      Specify the Docker image to use"
+    echo "r | release    Set the version/release tag to use."
+    echo "build_only     Do not run after the setup."
+    echo "execute_only   Assume that everything is set up and only run the container."
+    echo "container_name The name of the Docker container that will be run."
+    echo "sync           Perform a full sync instead of downloading the backup."
+    echo "help           Print this help."
     echo
     echo "Example usage:"
-    echo "./run_node.sh --name my-aleph-node --mainnet --release r-5.1"
+    echo "./run_node.sh --name=my-aleph-node --mainnet --release=r-5.1"
     echo
     echo "or, shorter:"
-    echo "./run_node.sh --n my-aleph-node -m --r r-5.1"
+    echo "./run_node.sh --n my-aleph-node --mainnet --r r-5.1"
     echo
 }
 
@@ -35,6 +35,7 @@ DB_SNAPSHOT_URL="https://db.test.azero.dev/${DATE}/${DB_SNAPSHOT_FILE}"
 MAINNET_DB_SNAPSHOT_URL_BASE="https://db-chain-exchange-bucket.s3.ap-northeast-1.amazonaws.com/${DATE}/"
 DB_SNAPSHOT_PATH="chains/testnet/"     # testnet by default
 CHAINSPEC_FILE="testnet_chainspec.json"
+CONTAINER_NAME="aleph-node"
 
 
 while getopts h:a:n:m:p:i:r:b:e:s:-: OPT; do
@@ -45,14 +46,14 @@ while getopts h:a:n:m:p:i:r:b:e:s:-: OPT; do
     fi
     echo ""
     case "$OPT" in
-        h | help) # display Help
+        help) # display Help
             Help
             exit;;
-        a | archivist) # Run as an archivist
+        archivist) # Run as an archivist
             ARCHIVIST=true;;
         n | name) # Enter a name
             NAME=$OPTARG;;
-        m | mainnet) # Join the mainnet
+        mainnet) # Join the mainnet
             DB_SNAPSHOT_PATH="chains/mainnet/"
             CHAINSPEC_FILE="mainnet_chainspec.json"
             DB_SNAPSHOT_FILE="db_chain_backup.tar.gz"
@@ -62,12 +63,14 @@ while getopts h:a:n:m:p:i:r:b:e:s:-: OPT; do
             PULL_IMAGE=false;;
         r | release) # Enter a release
             ALEPH_VERSION=$OPTARG;;
-        b | build_only)
+        build_only)
             BUILD_ONLY=true;;
-        e | execute_only)
+        execute_only)
             EXECUTE_ONLY=true;;
-        s | sync)
+        sync)
             SYNC=true;;
+        container_name)
+            CONTAINER_NAME=$OPTARG;;
         *) # Invalid option
             echo "Error: Invalid option"
             Help
@@ -108,10 +111,10 @@ then
     if [ -z "$ARCHIVIST" ]
     then
         eval "echo \"$(cat env/validator)\"" > env/validator.env
-        docker run --env-file env/validator.env -p "127.0.0.1:9933:9933" -p "127.0.0.1:9944:9944" -p 30333:30333 --mount type=bind,source=$(pwd),target=/data ${ALEPH_IMAGE}
+        docker run --env-file env/validator.env -p "127.0.0.1:9933:9933" -p "127.0.0.1:9944:9944" -p 30333:30333 --mount type=bind,source=$(pwd),target=/data --name ${CONTAINER_NAME} ${ALEPH_IMAGE}
     else
         eval "echo \"$(cat env/archivist)\"" > env/archivist.env
-        docker run --env-file env/archivist.env -p 9933:9933 -p 9944:9944 -p 30333:30333 --mount type=bind,source=$(pwd),target=/data ${ALEPH_IMAGE}
+        docker run --env-file env/archivist.env -p 9933:9933 -p 9944:9944 -p 30333:30333 --mount type=bind,source=$(pwd),target=/data --name ${CONTAINER_NAME} ${ALEPH_IMAGE}
     fi
 
 fi

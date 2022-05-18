@@ -47,3 +47,5 @@ The script allows you to customize the run in several ways, as listed below.
 * `--image`: you can provide the name and tag of your own Aleph Node image in case you don't want to use one from the official image repository
 * `--archivist`: (as described above) run the node as an archivist instead of a validator
 * `--name`: (as described above) provide the name of the node. If you omit this option, one will be generated for you but it's not encouraged.
+* `--container_name`: the name assigned to the Docker container that is run (note: it doesn't have anything to do with the `--name` flag, which is used for logging and telemetry purposes.
+
