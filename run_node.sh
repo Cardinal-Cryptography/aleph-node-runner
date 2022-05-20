@@ -124,6 +124,10 @@ then
         ENV_FILE="env/archivist.env"
     fi
 
-    docker run --env-file ${ENV_FILE} -p ${RPC_PORT} -p ${WS_PORT} -p 30333:30333 --mount type=bind,source=$(pwd),target=/data --name ${CONTAINER_NAME} ${DETACHED:+"-d"} ${ALEPH_IMAGE}
+    # remove the container if it exists
+    if [ "$(docker ps -aq -f status=exited -f name=${CONTAINER_NAME})" ]; then
+        docker rm ${CONTAINER_NAME}
+    fi
+    docker run --env-file ${ENV_FILE} -p ${RPC_PORT} -p ${WS_PORT} -p 30333:30333 -u $(id -u):$(id -g) --mount type=bind,source=$(pwd),target=/data --name ${CONTAINER_NAME} ${DETACHED:+"-d"} ${ALEPH_IMAGE}
 fi
 
