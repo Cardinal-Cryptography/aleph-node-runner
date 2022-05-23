@@ -89,6 +89,7 @@ then
         pushd ${DB_SNAPSHOT_PATH}
         wget ${DB_SNAPSHOT_URL}
         tar xvzf ${DB_SNAPSHOT_FILE}
+        rm ${DB_SNAPSHOT_FILE}
         popd
     fi
 
