@@ -3,19 +3,19 @@
 Help()
 {
     echo "Run the aleph-node as either a validator or an archivist."
+    echo "Syntax: ./run_node.sh [--<name|image|release|container_name>=<value> [--<archivist|mainnet|build_only|sync_from_genesis|background>]"
     echo
     echo "options:"
-    echo "archivist      Run the node as an archivist (the default is to run as a validator)"
-    echo "n | name       Set the node's name."
-    echo "mainnet        Join the mainnet (by default the script will join testnet)."
-    echo "i | image      Specify the Docker image to use"
-    echo "r | release    Set the version/release tag to use."
-    echo "build_only     Do not run after the setup."
-    echo "execute_only   Assume that everything is set up and only run the container."
-    echo "container_name The name of the Docker container that will be run."
-    echo "sync           Perform a full sync instead of downloading the backup."
-    echo "background     Run the container in detached mode."
-    echo "help           Print this help."
+    echo "archivist         Run the node as an archivist (the default is to run as a validator)"
+    echo "n | name          Set the node's name."
+    echo "mainnet           Join the mainnet (by default the script will join testnet)."
+    echo "i | image         Specify the Docker image to use"
+    echo "r | release       Set the version/release tag to use."
+    echo "build_only        Do not run after the setup."
+    echo "container_name    The name of the Docker container that will be run."
+    echo "sync_from_genesis Perform a full sync instead of downloading the backup."
+    echo "background        Run the container in detached mode."
+    echo "help              Print this help."
     echo
     echo "Example usage:"
     echo "./run_node.sh --name=my-aleph-node --mainnet --release=r-5.1"
@@ -39,7 +39,7 @@ CHAINSPEC_FILE="testnet_chainspec.json"
 CONTAINER_NAME="aleph-node"
 
 
-while getopts h:a:n:m:p:i:r:b:e:s:-: OPT; do
+while getopts n:i:r:-: OPT; do
     if [ "$OPT" = "-" ]; then   # long option: reformulate OPT and OPTARG
         OPT="${OPTARG%%=*}"       # extract long option name
         OPTARG="${OPTARG#$OPT}"   # extract long option argument (may be empty)
@@ -66,9 +66,7 @@ while getopts h:a:n:m:p:i:r:b:e:s:-: OPT; do
             ALEPH_VERSION=$OPTARG;;
         build_only)
             BUILD_ONLY=true;;
-        execute_only)
-            EXECUTE_ONLY=true;;
-        sync)
+        sync_from_genesis)
             SYNC=true;;
         container_name)
             CONTAINER_NAME=$OPTARG;;
@@ -85,7 +83,7 @@ if [ -z "$EXECUTE_ONLY" ]
 then
     mkdir -p ${DB_SNAPSHOT_PATH}
 
-    if [ ! -f ${DB_SNAPSHOT_PATH}/${DB_SNAPSHOT_FILE} ] && [ -z "$SYNC" ]
+    if [ ! -d "${DB_SNAPSHOT_PATH}/db/full" ] && [ -z "$SYNC" ]
     then
         echo "Downloading the snapshot..."
         pushd ${DB_SNAPSHOT_PATH}
@@ -94,10 +92,10 @@ then
         popd
     fi
 
-    if [ ! -f chainspec.json ]
+    if [ ! -f ${CHAINSPEC_FILE} ]
     then
         echo "Downloading the chainspec..."
-        wget -O chainspec.json https://raw.githubusercontent.com/Cardinal-Cryptography/aleph-node/main/bin/node/src/resources/${CHAINSPEC_FILE}
+        wget -O ${CHAINSPEC_FILE} https://raw.githubusercontent.com/Cardinal-Cryptography/aleph-node/main/bin/node/src/resources/${CHAINSPEC_FILE}
     fi
 fi
 
