@@ -112,21 +112,25 @@ then
     echo "Running the node..."
     if [ -z "$ARCHIVIST" ]
     then
-        RPC_PORT="127.0.0.1:9933:9933"
-        WS_PORT="127.0.0.1:9944:9944"
+        source env/validator
+        RPC_PORT_MAP="127.0.0.1:${RPC_PORT}:${RPC_PORT}"
+        WS_PORT_MAP="127.0.0.1:${WS_PORT}:${WS_PORT}"
         eval "echo \"$(cat env/validator)\"" > env/validator.env
         ENV_FILE="env/validator.env"
     else
-        RPC_PORT="9933:9933"
-        WS_PORT="9944:9944"
+        source env/archivist
+        RPC_PORT_MAP="${RPC_PORT}:${RPC_PORT}"
+        WS_PORT_MAP="${WS_PORT}:${WS_PORT}"
         eval "echo \"$(cat env/archivist)\"" > env/archivist.env
         ENV_FILE="env/archivist.env"
     fi
+
+    PORT_MAP="${PORT}:${PORT}"
 
     # remove the container if it exists
     if [ "$(docker ps -aq -f status=exited -f name=${CONTAINER_NAME})" ]; then
         docker rm ${CONTAINER_NAME}
     fi
-    docker run --env-file ${ENV_FILE} -p ${RPC_PORT} -p ${WS_PORT} -p 30333:30333 -u $(id -u):$(id -g) --mount type=bind,source=$(pwd),target=/data --name ${CONTAINER_NAME} ${DETACHED:+"-d"} ${ALEPH_IMAGE}
+    docker run --env-file ${ENV_FILE} -p ${RPC_PORT_MAP} -p ${WS_PORT_MAP} -p ${PORT_MAP} -u $(id -u):$(id -g) --mount type=bind,source=$(pwd),target=/data --name ${CONTAINER_NAME} ${DETACHED:+"-d"} ${ALEPH_IMAGE}
 fi
 
