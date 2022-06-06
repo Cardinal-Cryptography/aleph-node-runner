@@ -27,7 +27,7 @@ Help()
 
 
 # The defaults
-NAME="aleph-node-$(whoami)"
+NAME="aleph-node-$(xxd -l "16" -p /dev/urandom | tr -d " \n" ; echo)"
 BASE_PATH="/data"
 ALEPH_VERSION="r-5.2"
 DATE=$(date -d "yesterday" '+%Y-%m-%d')  # yesterday's date to make sure the snapshot is already uploaded (it happens once a day)
