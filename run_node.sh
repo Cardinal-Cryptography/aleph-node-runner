@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 Help()
 {
     echo "Run the aleph-node as either a validator or an archivist."
@@ -27,6 +29,7 @@ Help()
 
 
 # The defaults
+DETACHED=true
 NAME="aleph-node-$(xxd -l "16" -p /dev/urandom | tr -d " \n" ; echo)"
 BASE_PATH="/data"
 ALEPH_VERSION="r-5.2"
@@ -131,6 +134,6 @@ then
     if [ "$(docker ps -aq -f status=exited -f name=${CONTAINER_NAME})" ]; then
         docker rm ${CONTAINER_NAME}
     fi
-    docker run --env-file ${ENV_FILE} -p ${RPC_PORT_MAP} -p ${WS_PORT_MAP} -p ${PORT_MAP} -u $(id -u):$(id -g) --mount type=bind,source=$(pwd),target=/data --name ${CONTAINER_NAME} ${DETACHED:+"-d"} ${ALEPH_IMAGE}
+    docker run --env-file ${ENV_FILE} -p ${RPC_PORT_MAP} -p ${WS_PORT_MAP} -p ${PORT_MAP} -u $(id -u):$(id -g) --mount type=bind,source=$(pwd),target=${BASE_PATH} --name ${CONTAINER_NAME} ${DETACHED:+"-d"} ${ALEPH_IMAGE}
 fi
 
