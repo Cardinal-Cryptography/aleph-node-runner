@@ -1,6 +1,14 @@
 #!/bin/bash
 
-set -euo pipefail
+set -eo pipefail
+
+if [[ -z $1 ]]
+then
+    echo "The peer id was not provided."
+    echo "Usage: ./signer.sh <your peer id>"
+    exit 1
+fi
+
 
 NAME="aleph-signer"
 BASE_PATH="/data"
