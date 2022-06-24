@@ -5,7 +5,7 @@ set -eo pipefail
 Help()
 {
     echo "Run the aleph-node as either a validator or an archivist."
-    echo "Syntax: ./run_node.sh [--<name|image|release|container_name>=<value> [--<archivist|mainnet|build_only|sync_from_genesis|background>]"
+    echo "Syntax: ./run_node.sh [--<name|image|release|container_name>=<value> [--<archivist|mainnet|build_only|sync_from_genesis>]"
     echo
     echo "options:"
     echo "archivist         Run the node as an archivist (the default is to run as a validator)"
@@ -16,7 +16,6 @@ Help()
     echo "build_only        Do not run after the setup."
     echo "container_name    The name of the Docker container that will be run."
     echo "sync_from_genesis Perform a full sync instead of downloading the backup."
-    echo "background        Run the container in detached mode."
     echo "help              Print this help."
     echo
     echo "Example usage:"
@@ -29,7 +28,6 @@ Help()
 
 
 # The defaults
-DETACHED=true
 NAME="aleph-node-$(xxd -l "16" -p /dev/urandom | tr -d " \n" ; echo)"
 BASE_PATH="/data"
 ALEPH_VERSION="r-5.2"
@@ -73,8 +71,6 @@ while getopts n:i:r:-: OPT; do
             SYNC=true;;
         container_name)
             CONTAINER_NAME=$OPTARG;;
-        background)
-            DETACHED=true;;
         *) # Invalid option
             echo "Error: Invalid option"
             Help
@@ -134,6 +130,6 @@ then
     if [ "$(docker ps -aq -f status=exited -f name=${CONTAINER_NAME})" ]; then
         docker rm ${CONTAINER_NAME}
     fi
-    docker run --env-file ${ENV_FILE} -p ${RPC_PORT_MAP} -p ${WS_PORT_MAP} -p ${PORT_MAP} -u $(id -u):$(id -g) --mount type=bind,source=$(pwd),target=${BASE_PATH} --name ${CONTAINER_NAME} ${DETACHED:+"-d"} ${ALEPH_IMAGE}
+    docker run --env-file ${ENV_FILE} -p ${RPC_PORT_MAP} -p ${WS_PORT_MAP} -p ${PORT_MAP} -u $(id -u):$(id -g) --mount type=bind,source=$(pwd),target=${BASE_PATH} --name ${CONTAINER_NAME} -d ${ALEPH_IMAGE}
 fi
 
