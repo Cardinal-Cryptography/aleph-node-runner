@@ -30,7 +30,6 @@ Help()
 # The defaults
 NAME="aleph-node-$(xxd -l "16" -p /dev/urandom | tr -d " \n" ; echo)"
 BASE_PATH="/data"
-ALEPH_VERSION="r-5.2"
 DATE=$(date -d "yesterday" '+%Y-%m-%d')  # yesterday's date to make sure the snapshot is already uploaded (it happens once a day)
 DB_SNAPSHOT_FILE="db_backup_${DATE}.tar.gz"
 DB_SNAPSHOT_URL="https://db.test.azero.dev/${DATE}/${DB_SNAPSHOT_FILE}"
@@ -102,6 +101,11 @@ fi
 if [ -z "$ALEPH_IMAGE" ]
 then
     echo "Pulling docker image..."
+    if [ -z "$ALEPH_VERSION" ]
+    then
+        # find the newest version
+        ALEPH_VERSION=$(docker image ls --format  '{{ .Tag }}'  public.ecr.aws/p6e8q1z1/aleph-node | head -n 1)
+    fi
     ALEPH_IMAGE=public.ecr.aws/p6e8q1z1/aleph-node:${ALEPH_VERSION}
     docker pull ${ALEPH_IMAGE}
 fi
