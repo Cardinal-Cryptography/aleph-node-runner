@@ -42,7 +42,7 @@ The script allows you to customize the run in several ways, as listed below.
 * `--mainnet`: join the Aleph Mainnet instead of the default Testnet
 * `--detached`: run the container in detached mode and don't print logs to stdout (still accessible with `docker logs`).
 * `--sync`: by providing this option, you're choosing not to download and use a DB snapshot, but rather perform a full sync
-* `--release`: this allows you to specify a version of the Aleph Node binary: either a release tag (like `r-5.2`) or a short commit hash
+* `--release`: this allows you to specify a version of the Aleph Node binary: either a release tag (like `r-6.0`) or a short commit hash
 * `--build_only`: the script will only download and setup everything but will not actually run the binary in case you don't want to join the network yet
 * `--execute_only`: this will only run the container, assuming you have downloaded the necessary prerequisites (use it only if you know what you're doing)
 * `--image`: you can provide the name and tag of your own Aleph Node image in case you don't want to use one from the official image repository
