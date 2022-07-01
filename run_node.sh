@@ -30,7 +30,7 @@ Help()
 # The defaults
 NAME="aleph-node-$(xxd -l "16" -p /dev/urandom | tr -d " \n" ; echo)"
 BASE_PATH="/data"
-ALEPH_VERSION="r-5.2"
+ALEPH_VERSION="r-6.0"
 DATE=$(date -d "yesterday" '+%Y-%m-%d')  # yesterday's date to make sure the snapshot is already uploaded (it happens once a day)
 DB_SNAPSHOT_FILE="db_backup_${DATE}.tar.gz"
 DB_SNAPSHOT_URL="https://db.test.azero.dev/${DATE}/${DB_SNAPSHOT_FILE}"
