@@ -19,10 +19,10 @@ Help()
     echo "help              Print this help."
     echo
     echo "Example usage:"
-    echo "./run_node.sh --name=my-aleph-node --mainnet --release=r-5.1"
+    echo "./run_node.sh --name=my-aleph-node --mainnet --release=r-6.0"
     echo
     echo "or, shorter:"
-    echo "./run_node.sh --n my-aleph-node --mainnet --r r-5.1"
+    echo "./run_node.sh --n my-aleph-node --mainnet --r r-6.0"
     echo
 }
 
