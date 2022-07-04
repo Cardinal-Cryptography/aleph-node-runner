@@ -5,14 +5,13 @@ set -eo pipefail
 Help()
 {
     echo "Run the aleph-node as either a validator or an archivist."
-    echo "Syntax: ./run_node.sh [--<name|image|release|container_name>=<value> [--<archivist|mainnet|build_only|sync_from_genesis>]"
+    echo "Syntax: ./run_node.sh [--<name|image|container_name>=<value> [--<archivist|mainnet|build_only|sync_from_genesis>]"
     echo
     echo "options:"
     echo "archivist         Run the node as an archivist (the default is to run as a validator)"
     echo "n | name          Set the node's name."
     echo "mainnet           Join the mainnet (by default the script will join testnet)."
     echo "i | image         Specify the Docker image to use"
-    echo "r | release       Set the version/release tag to use."
     echo "build_only        Do not run after the setup."
     echo "container_name    The name of the Docker container that will be run."
     echo "sync_from_genesis Perform a full sync instead of downloading the backup."
@@ -63,8 +62,6 @@ while getopts n:i:r:-: OPT; do
         i | image) # Enter a base path
             ALEPH_IMAGE=$OPTARG
             PULL_IMAGE=false;;
-        r | release) # Enter a release
-            ALEPH_VERSION=$OPTARG;;
         build_only)
             BUILD_ONLY=true;;
         sync_from_genesis)
@@ -82,7 +79,7 @@ if [ -z "$EXECUTE_ONLY" ]
 then
     mkdir -p ${DB_SNAPSHOT_PATH}
 
-    if [ ! -d "${DB_SNAPSHOT_PATH}/db/full" ] && [ -z "$SYNC" ]
+    if [ ! -d "${DB_SNAPSHOT_PATH}/db/full" ] & [ -z "$SYNC" ]
     then
         echo "Downloading the snapshot..."
         pushd ${DB_SNAPSHOT_PATH}
@@ -102,6 +99,7 @@ fi
 if [ -z "$ALEPH_IMAGE" ]
 then
     echo "Pulling docker image..."
+    ALEPH_VERSION=$(cat env/version)
     ALEPH_IMAGE=public.ecr.aws/p6e8q1z1/aleph-node:${ALEPH_VERSION}
     docker pull ${ALEPH_IMAGE}
 fi
