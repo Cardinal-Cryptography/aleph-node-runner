@@ -25,6 +25,10 @@ Help()
     echo
 }
 
+echo "Updating this repo..."
+git pull origin main
+echo "Done"
+
 
 # The defaults
 NAME="aleph-node-$(xxd -l "16" -p /dev/urandom | tr -d " \n" ; echo)"
@@ -39,7 +43,7 @@ CHAINSPEC_FILE="testnet_chainspec.json"
 CONTAINER_NAME="aleph-node"
 
 
-while getopts n:i:r:-: OPT; do
+while getopts n:i:-: OPT; do
     if [ "$OPT" = "-" ]; then   # long option: reformulate OPT and OPTARG
         OPT="${OPTARG%%=*}"       # extract long option name
         OPTARG="${OPTARG#$OPT}"   # extract long option argument (may be empty)
