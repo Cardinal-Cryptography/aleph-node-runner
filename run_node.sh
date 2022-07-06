@@ -5,7 +5,7 @@ set -eo pipefail
 Help()
 {
     echo "Run the aleph-node as either a validator or an archivist."
-    echo "Syntax: ./run_node.sh [--<name|image|container_name>=<value> [--<archivist|mainnet|build_only|sync_from_genesis>]"
+    echo "Syntax: ./run_node.sh [--<name|image>=<value> [--<archivist|mainnet|build_only|sync_from_genesis>]"
     echo
     echo "options:"
     echo "archivist         Run the node as an archivist (the default is to run as a validator)"
@@ -13,15 +13,14 @@ Help()
     echo "mainnet           Join the mainnet (by default the script will join testnet)."
     echo "i | image         Specify the Docker image to use"
     echo "build_only        Do not run after the setup."
-    echo "container_name    The name of the Docker container that will be run."
     echo "sync_from_genesis Perform a full sync instead of downloading the backup."
     echo "help              Print this help."
     echo
     echo "Example usage:"
-    echo "./run_node.sh --name=my-aleph-node --mainnet --release=r-6.0"
+    echo "./run_node.sh --name=my-aleph-node --mainnet"
     echo
     echo "or, shorter:"
-    echo "./run_node.sh --n my-aleph-node --mainnet --r r-6.0"
+    echo "./run_node.sh --n my-aleph-node --mainnet"
     echo
 }
 
@@ -33,14 +32,12 @@ echo "Done"
 # The defaults
 NAME="aleph-node-$(xxd -l "16" -p /dev/urandom | tr -d " \n" ; echo)"
 BASE_PATH="/data"
-ALEPH_VERSION="r-6.0"
 DATE=$(date -d "yesterday" '+%Y-%m-%d')  # yesterday's date to make sure the snapshot is already uploaded (it happens once a day)
 DB_SNAPSHOT_FILE="db_backup_${DATE}.tar.gz"
 DB_SNAPSHOT_URL="https://db.test.azero.dev/${DATE}/${DB_SNAPSHOT_FILE}"
 MAINNET_DB_SNAPSHOT_URL_BASE="https://db-chain-exchange-bucket.s3.ap-northeast-1.amazonaws.com/${DATE}/"
 DB_SNAPSHOT_PATH="chains/testnet/"     # testnet by default
 CHAINSPEC_FILE="testnet_chainspec.json"
-CONTAINER_NAME="aleph-node"
 
 
 while getopts n:i:-: OPT; do
@@ -70,8 +67,6 @@ while getopts n:i:-: OPT; do
             BUILD_ONLY=true;;
         sync_from_genesis)
             SYNC=true;;
-        container_name)
-            CONTAINER_NAME=$OPTARG;;
         *) # Invalid option
             echo "Error: Invalid option"
             Help
@@ -83,7 +78,7 @@ if [ -z "$EXECUTE_ONLY" ]
 then
     mkdir -p ${DB_SNAPSHOT_PATH}
 
-    if [ ! -d "${DB_SNAPSHOT_PATH}/db/full" ] & [ -z "$SYNC" ]
+    if [ ! -d "${DB_SNAPSHOT_PATH}/db/full" ] && [ -z "$SYNC" ]
     then
         echo "Downloading the snapshot..."
         pushd ${DB_SNAPSHOT_PATH}
@@ -129,9 +124,9 @@ then
     PORT_MAP="${PORT}:${PORT}"
 
     # remove the container if it exists
-    if [ "$(docker ps -aq -f status=exited -f name=${CONTAINER_NAME})" ]; then
-        docker rm ${CONTAINER_NAME}
+    if [ "$(docker ps -aq -f status=exited -f name=${NAME})" ]; then
+        docker rm ${NAME}
     fi
-    docker run --env-file ${ENV_FILE} -p ${RPC_PORT_MAP} -p ${WS_PORT_MAP} -p ${PORT_MAP} -u $(id -u):$(id -g) --mount type=bind,source=$(pwd),target=${BASE_PATH} --name ${CONTAINER_NAME} -d ${ALEPH_IMAGE}
+    docker run --env-file ${ENV_FILE} -p ${RPC_PORT_MAP} -p ${WS_PORT_MAP} -p ${PORT_MAP} -u $(id -u):$(id -g) --mount type=bind,source=$(pwd),target=${BASE_PATH} --name ${NAME} -d ${ALEPH_IMAGE}
 fi
 
