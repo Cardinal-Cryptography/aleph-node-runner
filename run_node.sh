@@ -68,11 +68,12 @@ while [[ $# -gt 0 ]]; do
             SYNC=true
             shift;;
         -* | --* )
-            echo "Warning: unrecognized option: $1"; shift; break ;;
+            echo "Warning: unrecognized option: $1"
+            exit;; 
         *)
             echo "Unrecognized command"
             Help
-            exit ;;
+            exit;;
   esac
 done
 
