@@ -40,7 +40,7 @@ DB_SNAPSHOT_PATH="chains/testnet/"     # testnet by default
 CHAINSPEC_FILE="testnet_chainspec.json"
 
 
-while true; do
+while [[ $# -gt 0 ]]; do
     case "$1" in
         -h | --help) # display Help
             Help
@@ -67,9 +67,12 @@ while true; do
         --sync_from_genesis)
             SYNC=true
             shift;;
-        --* )
+        -* | --* )
             echo "Warning: unrecognized option: $1"; shift; break ;;
-        *) break ;;
+        *)
+            echo "Unrecognized command"
+            Help
+            exit ;;
   esac
 done
 
