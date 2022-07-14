@@ -32,7 +32,7 @@ echo "Done"
 # The defaults
 NAME="aleph-node-$(xxd -l "16" -p /dev/urandom | tr -d " \n" ; echo)"
 BASE_PATH="/data"
-DATE=$(date -d "yesterday" '+%Y-%m-%d')  # yesterday's date to make sure the snapshot is already uploaded (it happens once a day)
+DATE='2022-07-09'
 DB_SNAPSHOT_FILE="db_backup_${DATE}.tar.gz"
 DB_SNAPSHOT_URL="https://db.test.azero.dev/${DATE}/${DB_SNAPSHOT_FILE}"
 MAINNET_DB_SNAPSHOT_URL_BASE="https://db-chain-exchange-bucket.s3.ap-northeast-1.amazonaws.com/${DATE}/"
@@ -91,7 +91,7 @@ then
     if [ ! -f ${CHAINSPEC_FILE} ]
     then
         echo "Downloading the chainspec..."
-        wget -O ${CHAINSPEC_FILE} https://raw.githubusercontent.com/Cardinal-Cryptography/aleph-node/main/bin/node/src/resources/${CHAINSPEC_FILE}
+        wget -O ${CHAINSPEC_FILE} https://raw.githubusercontent.com/Cardinal-Cryptography/aleph-node/release-6/bin/node/src/resources/${CHAINSPEC_FILE}
     fi
 fi
 
