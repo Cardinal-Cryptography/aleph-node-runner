@@ -5,7 +5,7 @@ set -eo pipefail
 Help()
 {
     echo "Run the aleph-node as either a validator or an archivist."
-    echo "Syntax: ./run_node.sh [--<name|image>=<value> [--<archivist|mainnet|build_only|sync_from_genesis>]"
+    echo "Syntax: ./run_node.sh [--<name|image> <value>] [--<archivist|mainnet|build_only|sync_from_genesis>]"
     echo
     echo "options:"
     echo "archivist         Run the node as an archivist (the default is to run as a validator)"
@@ -17,7 +17,7 @@ Help()
     echo "help              Print this help."
     echo
     echo "Example usage:"
-    echo "./run_node.sh --name=my-aleph-node --mainnet"
+    echo "./run_node.sh --name my-aleph-node --mainnet"
     echo
     echo "or, shorter:"
     echo "./run_node.sh --n my-aleph-node --mainnet"
@@ -40,35 +40,38 @@ DB_SNAPSHOT_PATH="chains/testnet/"     # testnet by default
 CHAINSPEC_FILE="testnet_chainspec.json"
 
 
-while getopts n:i:-: OPT; do
-    if [ "$OPT" = "-" ]; then   # long option: reformulate OPT and OPTARG
-        OPT="${OPTARG%%=*}"       # extract long option name
-        OPTARG="${OPTARG#$OPT}"   # extract long option argument (may be empty)
-        OPTARG="${OPTARG#=}"      # if long option argument, remove assigning `=`
-    fi
-    echo ""
-    case "$OPT" in
-        help) # display Help
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h | --help) # display Help
             Help
             exit;;
-        archivist) # Run as an archivist
-            ARCHIVIST=true;;
-        n | name) # Enter a name
-            NAME=$OPTARG;;
-        mainnet) # Join the mainnet
+        --archivist) # Run as an archivist
+            ARCHIVIST=true
+            shift;;
+        -n | --name) # Enter a name
+            NAME="$2"
+            shift 2;;
+        --mainnet) # Join the mainnet
             DB_SNAPSHOT_PATH="chains/mainnet/"
             CHAINSPEC_FILE="mainnet_chainspec.json"
             DB_SNAPSHOT_FILE="db_chain_backup.tar.gz"
-            DB_SNAPSHOT_URL="${MAINNET_DB_SNAPSHOT_URL_BASE}/${DB_SNAPSHOT_FILE}";;
-        i | image) # Enter a base path
-            ALEPH_IMAGE=$OPTARG
-            PULL_IMAGE=false;;
-        build_only)
-            BUILD_ONLY=true;;
-        sync_from_genesis)
-            SYNC=true;;
-        *) # Invalid option
-            echo "Error: Invalid option"
+            DB_SNAPSHOT_URL="${MAINNET_DB_SNAPSHOT_URL_BASE}/${DB_SNAPSHOT_FILE}"
+            shift;;
+        -i | --image) # Enter a base path
+            ALEPH_IMAGE="$2"
+            PULL_IMAGE=false
+            shift 2;;
+        --build_only)
+            BUILD_ONLY=true
+            shift;;
+        --sync_from_genesis)
+            SYNC=true
+            shift;;
+        -* | --* )
+            echo "Warning: unrecognized option: $1"
+            exit;; 
+        *)
+            echo "Unrecognized command"
             Help
             exit;;
   esac
