@@ -77,6 +77,8 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+ALEPH_VERSION=$(cat env/version)
+
 if [ -z "$EXECUTE_ONLY" ]
 then
     mkdir -p ${DB_SNAPSHOT_PATH}
@@ -94,14 +96,13 @@ then
     if [ ! -f ${CHAINSPEC_FILE} ]
     then
         echo "Downloading the chainspec..."
-        wget -O ${CHAINSPEC_FILE} https://raw.githubusercontent.com/Cardinal-Cryptography/aleph-node/main/bin/node/src/resources/${CHAINSPEC_FILE}
+        wget -O ${CHAINSPEC_FILE} https://raw.githubusercontent.com/Cardinal-Cryptography/aleph-node/${ALEPH_VERSION}/bin/node/src/resources/${CHAINSPEC_FILE}
     fi
 fi
 
 if [ -z "$ALEPH_IMAGE" ]
 then
     echo "Pulling docker image..."
-    ALEPH_VERSION=$(cat env/version)
     ALEPH_IMAGE=public.ecr.aws/p6e8q1z1/aleph-node:${ALEPH_VERSION}
     docker pull ${ALEPH_IMAGE}
 fi
