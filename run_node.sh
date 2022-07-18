@@ -126,11 +126,20 @@ then
     fi
 
     PORT_MAP="${PORT}:${PORT}"
+    METRICS_PORT_MAP="127.0.0.1:9615:9615"
 
     # remove the container if it exists
     if [ "$(docker ps -aq -f status=exited -f name=${NAME})" ]; then
         docker rm ${NAME}
     fi
-    docker run --env-file ${ENV_FILE} -p ${RPC_PORT_MAP} -p ${WS_PORT_MAP} -p ${PORT_MAP} -u $(id -u):$(id -g) --mount type=bind,source=$(pwd),target=${BASE_PATH} --name ${NAME} -d ${ALEPH_IMAGE}
+    docker run --env-file ${ENV_FILE} \
+               -p ${RPC_PORT_MAP} \
+               -p ${WS_PORT_MAP} \
+               -p ${PORT_MAP} \
+               -p ${METRICS_PORT_MAP} \
+               -u $(id -u):$(id -g) \
+               --mount type=bind,source=$(pwd),target=${BASE_PATH} \
+               --name ${NAME} \
+               -d ${ALEPH_IMAGE}
 fi
 
