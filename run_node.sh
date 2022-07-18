@@ -126,7 +126,7 @@ then
     fi
 
     PORT_MAP="${PORT}:${PORT}"
-    METRICS_PORT_MAP="127.0.0.1:9615:9615"
+    METRICS_PORT_MAP="127.0.0.1:${METRICS_PORT}:${METRICS_PORT}"
 
     # remove the container if it exists
     if [ "$(docker ps -aq -f status=exited -f name=${NAME})" ]; then
