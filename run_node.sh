@@ -96,7 +96,7 @@ then
     if [ ! -f ${CHAINSPEC_FILE} ]
     then
         echo "Downloading the chainspec..."
-        wget -O ${CHAINSPEC_FILE} https://raw.githubusercontent.com/Cardinal-Cryptography/aleph-node/${ALEPH_VERSION}/bin/node/src/resources/${CHAINSPEC_FILE}
+        wget -O ${CHAINSPEC_FILE} https://raw.githubusercontent.com/Cardinal-Cryptography/aleph-node/release-6/bin/node/src/resources/${CHAINSPEC_FILE}
     fi
 fi
 
