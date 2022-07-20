@@ -79,26 +79,20 @@ done
 
 ALEPH_VERSION=$(cat env/version)
 
-if [ -z "$EXECUTE_ONLY" ]
+mkdir -p ${DB_SNAPSHOT_PATH}
+
+if [ ! -d "${DB_SNAPSHOT_PATH}/db/full" ] && [ -z "$SYNC" ]
 then
-    mkdir -p ${DB_SNAPSHOT_PATH}
-
-    if [ ! -d "${DB_SNAPSHOT_PATH}/db/full" ] && [ -z "$SYNC" ]
-    then
-        echo "Downloading the snapshot..."
-        pushd ${DB_SNAPSHOT_PATH}
-        wget ${DB_SNAPSHOT_URL}
-        tar xvzf ${DB_SNAPSHOT_FILE}
-        rm ${DB_SNAPSHOT_FILE}
-        popd
-    fi
-
-    if [ ! -f ${CHAINSPEC_FILE} ]
-    then
-        echo "Downloading the chainspec..."
-        wget -O ${CHAINSPEC_FILE} https://raw.githubusercontent.com/Cardinal-Cryptography/aleph-node/release-6/bin/node/src/resources/${CHAINSPEC_FILE}
-    fi
+    echo "Downloading the snapshot..."
+    pushd ${DB_SNAPSHOT_PATH}
+    wget ${DB_SNAPSHOT_URL}
+    tar xvzf ${DB_SNAPSHOT_FILE}
+    rm ${DB_SNAPSHOT_FILE}
+    popd
 fi
+
+echo "Downloading the chainspec..."
+wget -O ${CHAINSPEC_FILE} https://raw.githubusercontent.com/Cardinal-Cryptography/aleph-node/${ALEPH_VERSION}/bin/node/src/resources/${CHAINSPEC_FILE}
 
 if [ -z "$ALEPH_IMAGE" ]
 then
