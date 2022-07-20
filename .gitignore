@@ -6,3 +6,4 @@ chains/mainnet/*
 chains/testnet/*
 !chains/testnet/.gitkeep
 chainspec.json
+testnet_chainspec.json
