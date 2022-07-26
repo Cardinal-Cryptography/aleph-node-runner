@@ -33,11 +33,7 @@ echo "Done"
 NAME="aleph-node-$(xxd -l "16" -p /dev/urandom | tr -d " \n" ; echo)"
 BASE_PATH="/data"
 # yesterday's date to make sure the snapshot is already uploaded (it happens once a day)
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    DATE=$(date v -1d '+%Y-%m-%d')
-else
-    DATE=$(date -d "yesterday" '+%Y-%m-%d')
-fi
+DATE=$(date -d "yesterday" '+%Y-%m-%d' 2>/dev/null || date -v -1d '+%Y-%m-%d')
 DB_SNAPSHOT_FILE="db_backup_${DATE}.tar.gz"
 DB_SNAPSHOT_URL="https://db.test.azero.dev/${DATE}/${DB_SNAPSHOT_FILE}"
 MAINNET_DB_SNAPSHOT_URL_BASE="https://db-chain-exchange-bucket.s3.ap-northeast-1.amazonaws.com/${DATE}/"
