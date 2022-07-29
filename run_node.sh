@@ -32,10 +32,9 @@ echo "Done"
 # The defaults
 NAME="aleph-node-$(xxd -l "16" -p /dev/urandom | tr -d " \n" ; echo)"
 BASE_PATH="/data"
-DATE=$(date -d "yesterday" '+%Y-%m-%d')  # yesterday's date to make sure the snapshot is already uploaded (it happens once a day)
-DB_SNAPSHOT_FILE="db_backup_${DATE}.tar.gz"
-DB_SNAPSHOT_URL="https://db.test.azero.dev/${DATE}/${DB_SNAPSHOT_FILE}"
-MAINNET_DB_SNAPSHOT_URL_BASE="https://db-chain-exchange-bucket.s3.ap-northeast-1.amazonaws.com/${DATE}/"
+DB_SNAPSHOT_FILE="db_backup.tar.gz"
+DB_SNAPSHOT_URL="https://db.test.azero.dev/latest.html"
+MAINNET_DB_SNAPSHOT_URL="https://db.azero.dev/latest.html"
 DB_SNAPSHOT_PATH="chains/testnet/"     # testnet by default
 CHAINSPEC_FILE="testnet_chainspec.json"
 
@@ -54,8 +53,7 @@ while [[ $# -gt 0 ]]; do
         --mainnet) # Join the mainnet
             DB_SNAPSHOT_PATH="chains/mainnet/"
             CHAINSPEC_FILE="mainnet_chainspec.json"
-            DB_SNAPSHOT_FILE="db_chain_backup.tar.gz"
-            DB_SNAPSHOT_URL="${MAINNET_DB_SNAPSHOT_URL_BASE}/${DB_SNAPSHOT_FILE}"
+            DB_SNAPSHOT_URL="${MAINNET_DB_SNAPSHOT_URL}"
             shift;;
         -i | --image) # Enter a base path
             ALEPH_IMAGE="$2"
@@ -85,7 +83,7 @@ if [ ! -d "${DB_SNAPSHOT_PATH}/db/full" ] && [ -z "$SYNC" ]
 then
     echo "Downloading the snapshot..."
     pushd ${DB_SNAPSHOT_PATH}
-    wget ${DB_SNAPSHOT_URL}
+    wget -O ${DB_SNAPSHOT_FILE} ${DB_SNAPSHOT_URL}
     tar xvzf ${DB_SNAPSHOT_FILE}
     rm ${DB_SNAPSHOT_FILE}
     popd
