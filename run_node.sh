@@ -105,20 +105,15 @@ then
     if [ -z "$ARCHIVIST" ]
     then
         source env/validator
-        RPC_PORT_MAP="127.0.0.1:${RPC_PORT}:${RPC_PORT}"
-        WS_PORT_MAP="127.0.0.1:${WS_PORT}:${WS_PORT}"
         eval "echo \"$(cat env/validator)\"" > env/validator.env
         ENV_FILE="env/validator.env"
     else
         source env/archivist
-        RPC_PORT_MAP="${RPC_PORT}:${RPC_PORT}"
-        WS_PORT_MAP="${WS_PORT}:${WS_PORT}"
         eval "echo \"$(cat env/archivist)\"" > env/archivist.env
         ENV_FILE="env/archivist.env"
     fi
 
     PORT_MAP="${PORT}:${PORT}"
-    METRICS_PORT_MAP="127.0.0.1:${METRICS_PORT}:${METRICS_PORT}"
 
     # remove the container if it exists
     if [ "$(docker ps -aq -f status=exited -f name=${NAME})" ]; then
