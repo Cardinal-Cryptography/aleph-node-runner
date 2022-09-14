@@ -5,11 +5,12 @@ set -eo pipefail
 Help()
 {
     echo "Run the aleph-node as either a validator or an archivist."
-    echo "Syntax: ./run_node.sh [--<name|image> <value>] [--<archivist|mainnet|build_only|sync_from_genesis>]"
+    echo "Syntax: ./run_node.sh [--<name|image|data_dir> <value>] [--<archivist|mainnet|build_only|sync_from_genesis>]"
     echo
     echo "options:"
     echo "archivist         Run the node as an archivist (the default is to run as a validator)"
     echo "n | name          Set the node's name."
+    echo "d | data_dir      Specify the directory where all the chain data will be stored (default: ~/.alephzero)."
     echo "mainnet           Join the mainnet (by default the script will join testnet)."
     echo "i | image         Specify the Docker image to use"
     echo "build_only        Do not run after the setup."
@@ -32,6 +33,7 @@ echo "Done"
 # The defaults
 NAME="aleph-node-$(xxd -l "16" -p /dev/urandom | tr -d " \n" ; echo)"
 BASE_PATH="/data"
+HOST_BASE_PATH="${HOME}/.alephzero"
 DB_SNAPSHOT_FILE="db_backup.tar.gz"
 DB_SNAPSHOT_URL="https://db.test.azero.dev/latest.html"
 MAINNET_DB_SNAPSHOT_URL="https://db.azero.dev/latest.html"
@@ -49,6 +51,9 @@ while [[ $# -gt 0 ]]; do
             shift;;
         -n | --name) # Enter a name
             NAME="$2"
+            shift 2;;
+        -d | --data_dir) # Choose the data directory
+            HOST_BASE_PATH="$2"
             shift 2;;
         --mainnet) # Join the mainnet
             DB_SNAPSHOT_PATH="chains/mainnet/"
@@ -77,6 +82,8 @@ done
 
 ALEPH_VERSION=$(cat env/version)
 
+mkdir -p ${HOST_BASE_PATH}
+DB_SNAPSHOT_PATH=${HOST_BASE_PATH}/${DB_SNAPSHOT_PATH}
 mkdir -p ${DB_SNAPSHOT_PATH}
 
 if [ ! -d "${DB_SNAPSHOT_PATH}/db/full" ] && [ -z "$SYNC" ]
@@ -90,7 +97,9 @@ then
 fi
 
 echo "Downloading the chainspec..."
+pushd ${HOST_BASE_PATH}
 wget -O ${CHAINSPEC_FILE} https://raw.githubusercontent.com/Cardinal-Cryptography/aleph-node/${ALEPH_VERSION}/bin/node/src/resources/${CHAINSPEC_FILE}
+popd
 
 if [ -z "$ALEPH_IMAGE" ]
 then
@@ -125,7 +134,7 @@ then
                -p ${PORT_MAP} \
                -p ${METRICS_PORT_MAP} \
                -u $(id -u):$(id -g) \
-               --mount type=bind,source=$(pwd),target=${BASE_PATH} \
+               --mount type=bind,source=${HOST_BASE_PATH},target=${BASE_PATH} \
                --name ${NAME} \
                -d ${ALEPH_IMAGE}
 fi
