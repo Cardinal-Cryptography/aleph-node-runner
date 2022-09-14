@@ -39,6 +39,7 @@ The default is to run the node as a validator. Should you choose to run as an ar
 
 The script allows you to customize the run in several ways, as listed below.
 
+* `--data_dir`: specify the directory in which all of the chain data will be stored (defaults to `~/.alephzero`)
 * `--mainnet`: join the Aleph Mainnet instead of the default Testnet
 * `--sync_from_genesis`: by providing this option, you're choosing not to download and use a DB snapshot, but rather perform a full sync
 * `--build_only`: the script will only download and setup everything but will not actually run the binary in case you don't want to join the network yet
