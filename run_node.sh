@@ -79,7 +79,11 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-STASH_ACCOUNT=${STASH_ACCOUNT:?'Please specify your stash account_id.'}
+if [[ -z "$ARCHIVIST" ]]
+then
+    STASH_ACCOUNT=${STASH_ACCOUNT:?'Please specify your stash account_id.'}
+fi
+
 ALEPH_VERSION=$(cat env/version)
 
 mkdir -p ${DB_SNAPSHOT_PATH}
