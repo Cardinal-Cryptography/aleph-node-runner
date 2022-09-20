@@ -5,7 +5,7 @@ set -eo pipefail
 Help()
 {
     echo "Run the aleph-node as either a validator or an archivist."
-    echo "Syntax: ./run_node.sh [--<name|image> <value>] [--<archivist|mainnet|build_only|sync_from_genesis>]"
+    echo "Syntax: ./run_node.sh [--<name|image|stash_account> <value>] [--<archivist|mainnet|build_only|sync_from_genesis>]"
     echo
     echo "options:"
     echo "archivist         Run the node as an archivist (the default is to run as a validator)."
@@ -139,9 +139,11 @@ then
                -d ${ALEPH_IMAGE}
 fi
 
-# If node is run by archivist, then we are done
+echo 'Performing session key checks...'
+
 if [[ -n "$ARCHIVIST" ]]
 then
+    echo 'Node run as archivist: no need to check session keys.'
     exit 0
 fi
 
@@ -152,13 +154,20 @@ JQ_IMAGE='stedolan/jq:latest'
 # Pull cliain from ecr
 docker pull "$CLIAIN_IMAGE"
 
-# Try to retrieve set session keys from chain's storage[, remove cliain image]
-SESSION_KEYS_JSON=$(docker run --network="host" "$CLIAIN_IMAGE" next-session-keys \
-    --account-id "$STASH_ACCOUNT" 2> /dev/null)
+# Try to retrieve set session keys from chain's storage
+if ! SESSION_KEYS_JSON=$(docker run --network="host" "$CLIAIN_IMAGE" --node "localhost:$WS_PORT" \
+    next-session-keys --account-id "$STASH_ACCOUNT" 2> '/tmp/.alephzero_cliain.log');
+then
+    # This should not happen even if the keys are not set
+    echo "Cliain failed when trying to retrieve keys for this stash account. Logs:"
+    cat "/tmp/.alephzero_cliain.log"
+fi
 
 # Check if there are any session keys set for the specified stash account
 if [[ -n "$SESSION_KEYS_JSON" ]]
 then
+    # Check the external jq image
+    docker image inspect "$JQ_IMAGE" > /dev/null && echo "JQ image check: OK"
     # Read keys from the JSON
     AURA_KEY=$(echo "$SESSION_KEYS_JSON" | docker run -i "$JQ_IMAGE" '.aura' | tr -d '"')
     ALEPH_KEY=$(echo "$SESSION_KEYS_JSON" | docker run -i "$JQ_IMAGE" '.aleph' | tr -d '"')
