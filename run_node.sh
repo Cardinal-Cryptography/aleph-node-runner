@@ -201,6 +201,10 @@ then
         docker stop "$NAME"
         exit 1
     fi
+else
+    echo ""
+    echo "Specified account do not have any session keys set."
+    echo "You should generate and set the keys to be able to validate."
 fi
 
 exit 0
