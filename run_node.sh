@@ -79,7 +79,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ -z "$ARCHIVIST" ]]
+if [[ -z "${ARCHIVIST}" ]]
 then
     STASH_ACCOUNT=${STASH_ACCOUNT:?'Please specify your stash account_id.'}
 fi
@@ -88,7 +88,7 @@ ALEPH_VERSION=$(cat env/version)
 
 mkdir -p ${DB_SNAPSHOT_PATH}
 
-if [ ! -d "${DB_SNAPSHOT_PATH}/db/full" ] && [ -z "$SYNC" ]
+if [ ! -d "${DB_SNAPSHOT_PATH}/db/full" ] && [ -z "${SYNC}" ]
 then
     echo "Downloading the snapshot..."
     pushd ${DB_SNAPSHOT_PATH}
@@ -101,17 +101,17 @@ fi
 echo "Downloading the chainspec..."
 wget -O ${CHAINSPEC_FILE} https://raw.githubusercontent.com/Cardinal-Cryptography/aleph-node/${ALEPH_VERSION}/bin/node/src/resources/${CHAINSPEC_FILE}
 
-if [ -z "$ALEPH_IMAGE" ]
+if [ -z "${ALEPH_IMAGE}" ]
 then
     echo "Pulling docker image..."
     ALEPH_IMAGE=public.ecr.aws/p6e8q1z1/aleph-node:${ALEPH_VERSION}
     docker pull ${ALEPH_IMAGE}
 fi
 
-if [ -z "$BUILD_ONLY" ]
+if [ -z "${BUILD_ONLY}" ]
 then
     echo "Running the node..."
-    if [ -z "$ARCHIVIST" ]
+    if [ -z "${ARCHIVIST}" ]
     then
         source env/validator
         eval "echo \"$(cat env/validator)\"" > env/validator.env
@@ -141,7 +141,7 @@ fi
 
 echo 'Performing session key checks...'
 
-if [[ -n "$ARCHIVIST" ]]
+if [[ -n "${ARCHIVIST}" ]]
 then
     echo 'Node run as archivist: no need to check session keys.'
     exit 0
@@ -152,11 +152,11 @@ CLIAIN_IMAGE='public.ecr.aws/p6e8q1z1/cliain:f0688f5'
 JQ_IMAGE='stedolan/jq:latest'
 
 # Pull cliain from ecr
-docker pull "$CLIAIN_IMAGE"
+docker pull "${CLIAIN_IMAGE}"
 
 # Try to retrieve set session keys from chain's storage
-if ! SESSION_KEYS_JSON=$(docker run --network="host" "$CLIAIN_IMAGE" --node 127.0.0.1:"$WS_PORT" \
-    next-session-keys --account-id "$STASH_ACCOUNT" 2> '/tmp/.alephzero_cliain.log');
+if ! SESSION_KEYS_JSON=$(docker run --network="host" "${CLIAIN_IMAGE}" --node 127.0.0.1:"${WS_PORT}" \
+    next-session-keys --account-id "${STASH_ACCOUNT}" 2> '/tmp/.alephzero_cliain.log');
 then
     # This should not happen even if the keys are not set
     echo "Cliain failed when trying to retrieve keys for this stash account. Logs:"
@@ -164,13 +164,13 @@ then
 fi
 
 # Check if there are any session keys set for the specified stash account
-if [[ -n "$SESSION_KEYS_JSON" ]]
+if [[ -n "${SESSION_KEYS_JSON}" ]]
 then
     # Check the external jq image
-    docker image inspect "$JQ_IMAGE" > /dev/null && echo "JQ image check: OK"
+    docker image inspect "${JQ_IMAGE}" > /dev/null && echo "JQ image check: OK"
     # Read keys from the JSON
-    AURA_KEY=$(echo "$SESSION_KEYS_JSON" | docker run -i "$JQ_IMAGE" '.aura' | tr -d '"')
-    ALEPH_KEY=$(echo "$SESSION_KEYS_JSON" | docker run -i "$JQ_IMAGE" '.aleph' | tr -d '"')
+    AURA_KEY=$(echo "${SESSION_KEYS_JSON}" | docker run -i "${JQ_IMAGE}" '.aura' | tr -d '"')
+    ALEPH_KEY=$(echo "${SESSION_KEYS_JSON}" | docker run -i "${JQ_IMAGE}" '.aleph' | tr -d '"')
 
     # Format keys into string notation
     ALEPH_KEY_TRUNCATED="${ALEPH_KEY#"0x"}"
@@ -179,11 +179,11 @@ then
     # Perform an RPC call to the local node to check whether it has access to the keys
     HAS_KEYS_RESULT_JSON=$(curl -H "Content-Type: application/json" \
         -d '{"id":1, "jsonrpc":"2.0", "method": "author_hasSessionKeys",
-            "params":["'"$SESSION_KEYS_STRING"'"]}' http://127.0.0.1:"$RPC_PORT" 2> /dev/null)
+            "params":["'"${SESSION_KEYS_STRING}"'"]}' http://127.0.0.1:"${RPC_PORT}" 2> /dev/null)
 
-    HAS_KEYS_RESULT=$(echo "$HAS_KEYS_RESULT_JSON" | docker run -i "$JQ_IMAGE" '.result')
+    HAS_KEYS_RESULT=$(echo "${HAS_KEYS_RESULT_JSON}" | docker run -i "${JQ_IMAGE}" '.result')
 
-    if [[ "$HAS_KEYS_RESULT" == false ]]
+    if [[ "${HAS_KEYS_RESULT}" == false ]]
     then
         # If the keys are not present, then we stop the node and print the message
         # (the node would not be able to validate properly anyway)
@@ -191,14 +191,14 @@ then
         RED='\033[0;31m'
         NC='\033[0m'
 
-        >&2 echo -e "$RED"
+        >&2 echo -e "${RED}"
         >&2 echo "Session keys are set for this stash account, but it seems like you do not have access to them."
         >&2 echo "You might want to generate new keys and set them for your stash account."
         >&2 echo "Stopping the node..."
-        >&2 echo -e "$NC"
+        >&2 echo -e "${NC}"
 
         # Stop the node
-        docker stop "$NAME"
+        docker stop "${NAME}"
         exit 1
     fi
 else
