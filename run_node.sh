@@ -18,10 +18,10 @@ Help()
     echo "help              Print this help."
     echo
     echo "Example usage:"
-    echo "./run_node.sh --name my-aleph-node --mainnet"
+    echo "./run_node.sh --name my-aleph-node --mainnet --stash_account 5CeeD3MGHCvZecJkvfJVzYvYkoPtw9pTVvskutXAUtZtjcYa"
     echo
     echo "or, shorter:"
-    echo "./run_node.sh --n my-aleph-node --mainnet"
+    echo "./run_node.sh --n my-aleph-node --mainnet --stash_account 5CeeD3MGHCvZecJkvfJVzYvYkoPtw9pTVvskutXAUtZtjcYa"
     echo
 }
 
