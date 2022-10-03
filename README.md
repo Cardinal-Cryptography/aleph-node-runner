@@ -18,7 +18,7 @@ cd aleph-node-runner
 Once inside the `aleph-node-runner` folder, run:
 
 ```bash
-./run_node.sh --name <your_nodes_name>
+./run_node.sh --name <your_nodes_name> --stash_account <validator_stash_account_id>
 ```
 
 It might take quite some time before you actually get the node running: the script will first download required files, including a database snapshot (sized ~100GB). You can alternatively skip this step by providing the `--skip` flag (see the 'Additional Options' section). The script will then run the node for you and you should start seeing some block-related output.
@@ -45,4 +45,5 @@ The script allows you to customize the run in several ways, as listed below.
 * `--image`: you can provide the name and tag of your own Aleph Node image in case you don't want to use one from the official image repository
 * `--archivist`: (as described above) run the node as an archivist instead of a validator
 * `--name`: (as described above) provide the name of the node. If you omit this option, one will be generated for you but it's not encouraged.
+* `--stash_account`: provide `AccountId` of the stash account linked to your validator node. If you run as validator, then this argument is mandatory.
 
