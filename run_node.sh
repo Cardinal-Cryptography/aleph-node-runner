@@ -206,6 +206,44 @@ else
     echo ""
     echo "Specified account do not have any session keys set."
     echo "You should generate and set the keys to be able to validate."
+
+    read -p "Do you want to generate new session keys? [y/N] " -n 1 -r
+    if [[ ${REPLY} =~ ^[Yy]$ ]]
+    then
+        echo ""
+        echo "Generating new session keys..."
+        NEW_KEYS_JSON=$(curl -H "Content-Type: application/json" -d '{"id":1,
+            "jsonrpc":"2.0", "method": "author_rotateKeys"}' http://127.0.0.1:"${RPC_PORT}")
+
+        NEW_KEYS=$(echo ${NEW_KEYS_JSON} | docker run -i "${JQ_IMAGE}" '.result' | tr -d '"')
+        echo "New session keys: ${NEW_KEYS}"
+
+        echo "Now, you should set those newly generated keys for your stash account."
+        echo "You may do it your preferred way, eg. using web wallet, or set them now by providing mnemonic seed to your stash account."
+        read -p "Do you want to set your keys using mnemonic seed? [y/N] " -n 1 -r
+        echo
+        if [[ ${REPLY} =~ ^[Yy]$ ]]
+        then
+            # Try to set, tell if the operation was successful
+            echo "??????"
+            docker run -it --network="host" cliain:${CLIAIN_VERSION} set-keys --new-keys "${NEW_KEYS}" 2> '/tmp/.alephzero_cliain.log'
+            cat '/tmp/.alephzero_cliain.log'
+
+            :'
+            if SESSION_KEYS_JSON=$(docker run -it --network="host" cliain:${CLIAIN_VERSION} \
+                set-keys --new-keys "${NEW_KEYS}" 2> '/tmp/.alephzero_cliain.log');
+            then
+                echo "Session keys succesfully set."
+                cat '/tmp/.alephzero_cliain.log'
+            else
+                echo "Set keys failed. You will need to set them manualy."
+                echo "Cliain logs:"
+                cat '/tmp/.alephzero_cliain.log'
+                exit 1
+            fi
+            '
+        fi
+    fi
 fi
 
 exit 0
