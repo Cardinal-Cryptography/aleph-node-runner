@@ -225,23 +225,16 @@ else
         if [[ ${REPLY} =~ ^[Yy]$ ]]
         then
             # Try to set, tell if the operation was successful
-            echo "??????"
-            docker run -it --network="host" cliain:${CLIAIN_VERSION} set-keys --new-keys "${NEW_KEYS}" 2> '/tmp/.alephzero_cliain.log'
-            cat '/tmp/.alephzero_cliain.log'
-
-            :'
-            if SESSION_KEYS_JSON=$(docker run -it --network="host" cliain:${CLIAIN_VERSION} \
-                set-keys --new-keys "${NEW_KEYS}" 2> '/tmp/.alephzero_cliain.log');
+            if docker run -it --network="host" ${CLIAIN_IMAGE} \
+                set-keys --new-keys "${NEW_KEYS}" 2> '/tmp/.alephzero_cliain.log';
             then
                 echo "Session keys succesfully set."
-                cat '/tmp/.alephzero_cliain.log'
             else
                 echo "Set keys failed. You will need to set them manualy."
                 echo "Cliain logs:"
                 cat '/tmp/.alephzero_cliain.log'
                 exit 1
             fi
-            '
         fi
     fi
 fi
