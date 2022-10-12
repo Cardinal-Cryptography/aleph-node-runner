@@ -79,11 +79,6 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ -z "${ARCHIVIST}" ]]
-then
-    STASH_ACCOUNT=${STASH_ACCOUNT:?'Please specify your stash account_id.'}
-fi
-
 ALEPH_VERSION=$(cat env/version)
 
 mkdir -p ${DB_SNAPSHOT_PATH}
@@ -145,6 +140,12 @@ echo 'Performing session key checks...'
 if [[ -n "${ARCHIVIST}" ]]
 then
     echo 'Node run as archivist: no need to check session keys.'
+    exit 0
+fi
+
+if [[ -z "${STASH_ACCOUNT}" ]]
+then
+    echo "Stash account not provided: skipping the session keys check."
     exit 0
 fi
 
