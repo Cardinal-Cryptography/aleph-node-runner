@@ -25,9 +25,20 @@ Help()
     echo
 }
 
-echo "Updating this repo..."
-# git pull origin main
-echo "Done"
+git remote update
+LOCAL=$(git rev-parse main)
+BASE=$(git merge-base main origin/main)
+
+if [ $LOCAL = $BASE ]; then
+    echo "Updating this repo..."
+    git stash
+    git pull --rebase origin main
+    git stash pop
+    echo "Done"
+else
+    echo "Repository up-to-date"
+fi
+
 
 
 # The defaults
