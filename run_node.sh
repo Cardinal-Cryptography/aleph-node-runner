@@ -146,16 +146,16 @@ fi
 if [[ -z "${STASH_ACCOUNT}" ]]
 then
     echo "Stash account not provided. This is ok if you're running the script for the first time but recommended for subsequent runs."
-    echo "Are you sure you want to skip the session keys check? [y]/n"
-    read -r CHECK
-    if [[ "${CHECK}" = 'n' ]]
+    read -p "Are you sure you want to skip the session keys check? [y/N]" -r -n 1
+    echo ""
+
+    if [[ "${REPLY}" =~ ^[Yy] ]]
     then
         echo "Skipping the session keys check."
         exit 0
     fi
 
-    echo "Please provide your stash account: "
-    read -r STASH_ACCOUNT
+    read -p "Please provide your stash account: " -r STASH_ACCOUNT
 fi
 
 ## Now we will attempt to check validator's session keys
