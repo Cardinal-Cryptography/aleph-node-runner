@@ -97,14 +97,14 @@ if [ ! -d "${HOST_BASE_PATH}/${DB_SNAPSHOT_PATH}" ] && [ -d "${DB_SNAPSHOT_PATH}
 then
     echo "The default location of the data directory has changed."
     echo "Your files will be copied automatically to ${HOST_BASE_PATH}/${DB_SNAPSHOT_PATH}."
-    echo "If you wish to customize the directory, select \'n\' and re-run the script"
-    echo "with the \'--data_dir\' argument."
+    echo "If you wish to customize the directory, select 'n' and re-run the script"
+    echo "with the '--data_dir' argument."
     echo "Do you want to continue? [y]/n"
     read -r CONT
 
     if [[ "$CONT" == 'n' ]]
     then
-        echo "Please re-run the script, supplying the \'--data_dir\' argument, exiting."
+        echo "Please re-run the script, supplying the '--data_dir' argument, exiting."
         exit 0
     fi
 
