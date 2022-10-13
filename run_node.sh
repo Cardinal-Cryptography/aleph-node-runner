@@ -9,7 +9,7 @@ Help()
     echo
     echo "options:"
     echo "archivist         Run the node as an archivist (the default is to run as a validator)."
-    echo "stash_account     Stash account of your validator - mandatory if --archivist is not set."
+    echo "stash_account     Stash account of your validator: optional but recommended, if you're re-running the script."
     echo "n | name          Set the node's name."
     echo "mainnet           Join the mainnet (by default the script will join testnet)."
     echo "i | image         Specify the Docker image to use"
@@ -145,8 +145,17 @@ fi
 
 if [[ -z "${STASH_ACCOUNT}" ]]
 then
-    echo "Stash account not provided: skipping the session keys check."
-    exit 0
+    echo "Stash account not provided. This is ok if you're running the script for the first time but recommended for subsequent runs."
+    echo "Are you sure you want to skip the session keys check? [y]/n"
+    read -r CHECK
+    if [[ "${CHECK}" = 'n' ]]
+    then
+        echo "Skipping the session keys check."
+        exit 0
+    fi
+
+    echo "Please provide your stash account: "
+    read -r STASH_ACCOUNT
 fi
 
 ## Now we will attempt to check validator's session keys
