@@ -10,7 +10,7 @@ BASE=$(git merge-base HEAD origin/${BRANCH})
 if [ $LOCAL = $BASE ]; then
     echo "Updating this repo..."
     git stash
-    git pull --rebase origin main
+    git pull --rebase origin ${BRANCH}
     git stash pop
     echo "Done"
 else
