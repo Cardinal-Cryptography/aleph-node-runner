@@ -137,7 +137,8 @@ then
             PUBLIC_VALIDATOR_ADDRESS="${PUBLIC_IP}:${VALIDATOR_PORT}"
         fi
 
-        echo "Running with public address: ${PUBLIC_ADDR}"
+        echo "Running with public P2P address: ${PUBLIC_ADDR}"
+        echo "And validator address: ${PUBLIC_VALIDATOR_ADDRESS}."
     else
         source env/archivist
         eval "echo \"$(cat env/archivist)\"" > env/archivist.env
