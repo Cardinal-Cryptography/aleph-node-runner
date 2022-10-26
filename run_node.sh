@@ -131,10 +131,10 @@ then
         if [[ -n "${PUBLIC_DNS}" ]]
         then
             PUBLIC_ADDR="/dns4/${PUBLIC_DNS}/tcp/${PORT}"
-            PUBLIC_VALIDATOR_ADDRESS="/dns4/${PUBLIC_DNS}/tcp/${VALIDATOR_PORT}"
+            PUBLIC_VALIDATOR_ADDRESS="${PUBLIC_DNS}:${VALIDATOR_PORT}"
         else
             PUBLIC_ADDR="/ip4/${PUBLIC_IP}/tcp/${PORT}"
-            PUBLIC_VALIDATOR_ADDRESS="/ip4/${PUBLIC_IP}/tcp/${VALIDATOR_PORT}"
+            PUBLIC_VALIDATOR_ADDRESS="${PUBLIC_IP}:${VALIDATOR_PORT}"
         fi
 
         echo "Running with public address: ${PUBLIC_ADDR}"
