@@ -242,7 +242,8 @@ else
         if [[ ${REPLY} =~ ^[Yy]$ ]]
         then
             # Try to set, tell if the operation was successful
-            if docker run -it "${CLIAIN_IMAGE}" --node "${CLIAIN_ENDPOINT}" \
+            CLIAIN_NAME="cliain-$(xxd -l "16" -p /dev/urandom | tr -d " \n" ; echo)"
+            if docker run --name="${CLIAIN_NAME}" -it "${CLIAIN_IMAGE}" --node "${CLIAIN_ENDPOINT}" \
                 set-keys --new-keys "${NEW_KEYS}";
             then
                 echo ""
