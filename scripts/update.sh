@@ -8,6 +8,14 @@ LOCAL=$(git rev-parse HEAD)
 BASE=$(git merge-base HEAD origin/${BRANCH})
 
 if [ $LOCAL = $BASE ]; then
+    echo "Newer version available, would you like to update? Y/n"
+    read -r UPDATE
+    if [[ "${UPDATE}" = 'n' ]]
+    then
+        exit 0
+    fi
+
+
     echo "Updating this repo..."
     git stash || true
     git pull --rebase origin ${BRANCH}
