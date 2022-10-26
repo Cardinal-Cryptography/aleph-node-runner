@@ -146,8 +146,6 @@ fi
 echo ""
 echo 'Performing session key checks...'
 
-source ./env/validator
-
 if [[ -z "${STASH_ACCOUNT}" ]]
 then
     echo "Stash account not provided. This is ok if you're running the script for the first time but recommended for subsequent runs."
