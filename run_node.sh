@@ -175,9 +175,13 @@ if ! SESSION_KEYS_JSON=$(docker run --name="${CLIAIN_NAME}" "${CLIAIN_IMAGE}" --
     next-session-keys --account-id "${STASH_ACCOUNT}" 2> /dev/null);
 then
     # This should not happen even if the keys are not set
-    echo "Cliain failed when trying to retrieve keys for this stash account."
-    echo "Use docker logs ${CLIAIN_NAME} to see logs."
+    echo "Cliain failed when trying to retrieve keys for this stash account. Logs:"
+    docker logs "${CLIAIN_NAME}"
+    docker rm "${CLIAIN_NAME}"
+    exit 0
 fi
+
+docker rm "${CLIAIN_NAME}"
 
 # Check if there are any session keys set for the specified stash account
 if [[ -n "${SESSION_KEYS_JSON}" ]]
@@ -241,7 +245,7 @@ else
         then
             # Try to set, tell if the operation was successful
             CLIAIN_NAME="cliain-$(xxd -l "16" -p /dev/urandom | tr -d " \n" ; echo)"
-            if docker run --name="${CLIAIN_NAME}" -it "${CLIAIN_IMAGE}" --node "${CLIAIN_ENDPOINT}" \
+            if docker run --rm --name="${CLIAIN_NAME}" -it "${CLIAIN_IMAGE}" --node "${CLIAIN_ENDPOINT}" \
                 set-keys --new-keys "${NEW_KEYS}";
             then
                 echo ""
