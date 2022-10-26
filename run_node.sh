@@ -5,10 +5,12 @@ set -eo pipefail
 Help()
 {
     echo "Run the aleph-node as either a validator or an archivist."
-    echo "Syntax: ./run_node.sh [--<name|image|stash_account> <value>] [--<archivist|mainnet|build_only|sync_from_genesis>]"
+    echo "Syntax: ./run_node.sh [--<name|image|stash_account|ip|dns> <value>] [--<archivist|mainnet|build_only|sync_from_genesis>]"
     echo
     echo "options:"
     echo "archivist         Run the node as an archivist (the default is to run as a validator)."
+    echo "ip                The public IP of your node."
+    echo "dns               The public DNS of your node."
     echo "stash_account     Stash account of your validator: optional but recommended, if you're re-running the script."
     echo "n | name          Set the node's name."
     echo "mainnet           Join the mainnet (by default the script will join testnet)."
@@ -18,10 +20,10 @@ Help()
     echo "help              Print this help."
     echo
     echo "Example usage:"
-    echo "./run_node.sh --name my-aleph-node --mainnet --stash_account 5CeeD3MGHCvZecJkvfJVzYvYkoPtw9pTVvskutXAUtZtjcYa"
+    echo "./run_node.sh --name my-aleph-node --ip 123.123.123.123 --mainnet --stash_account 5CeeD3MGHCvZecJkvfJVzYvYkoPtw9pTVvskutXAUtZtjcYa"
     echo
-    echo "or, shorter:"
-    echo "./run_node.sh --n my-aleph-node --mainnet --stash_account 5CeeD3MGHCvZecJkvfJVzYvYkoPtw9pTVvskutXAUtZtjcYa"
+    echo "or:"
+    echo "./run_node.sh --n my-aleph-node --dns my.validator.com --mainnet --stash_account 5CeeD3MGHCvZecJkvfJVzYvYkoPtw9pTVvskutXAUtZtjcYa"
     echo
 }
 
@@ -48,6 +50,12 @@ while [[ $# -gt 0 ]]; do
         --archivist) # Run as an archivist
             ARCHIVIST=true
             shift;;
+        --ip)
+            PUBLIC_IP="$2"
+            shift 2;;
+        --dns)
+            PUBLIC_DNS="$2"
+            shift 2;;
         -n | --name) # Enter a name
             NAME="$2"
             shift 2;;
@@ -78,6 +86,13 @@ while [[ $# -gt 0 ]]; do
             exit;;
   esac
 done
+
+if [ -z "${PUBLIC_IP}" ] && [ -z "${PUBLIC_DNS}" ]
+then
+    echo "You need to provide either a public ip (--ip) or a public dns (--dns)."
+    exit 1
+fi
+
 
 ALEPH_VERSION=$(cat env/version)
 
@@ -111,6 +126,18 @@ then
         source env/validator
         eval "echo \"$(cat env/validator)\"" > env/validator.env
         ENV_FILE="env/validator.env"
+
+        # setup public addresses
+        if [[ -n "${PUBLIC_DNS}" ]]
+        then
+            PUBLIC_ADDR="/dns4/${PUBLIC_DNS}/tcp/${PORT}"
+            PUBLIC_VALIDATOR_ADDRESS="/dns4/${PUBLIC_DNS}/tcp/${VALIDATOR_PORT}"
+        else
+            PUBLIC_ADDR="/ip4/${PUBLIC_IP}/tcp/${PORT}"
+            PUBLIC_VALIDATOR_ADDRESS="/ip4/${PUBLIC_IP}/tcp/${VALIDATOR_PORT}"
+        fi
+
+        echo "Running with public address: ${PUBLIC_ADDR}"
     else
         source env/archivist
         eval "echo \"$(cat env/archivist)\"" > env/archivist.env
@@ -124,6 +151,8 @@ then
         docker rm ${NAME}
     fi
     docker run --env-file ${ENV_FILE} \
+               --env PUBLIC_ADDR="${PUBLIC_ADDR}" \
+               --env PUBLIC_VALIDATOR_ADDRESS="${PUBLIC_VALIDATOR_ADDRESS}" \
                -p ${RPC_PORT_MAP} \
                -p ${WS_PORT_MAP} \
                -p ${PORT_MAP} \
