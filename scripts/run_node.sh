@@ -90,7 +90,7 @@ then
     echo "Your files will be copied automatically to ${HOST_BASE_PATH}/${DB_SNAPSHOT_PATH}."
     echo "If you wish to customize the directory, select 'n' and re-run the script"
     echo "with the '--data_dir' argument."
-    echo "Do you want to continue? [y]/n"
+    echo "Do you want to continue? [Y/n]"
     read -r CONT
 
     if [[ "$CONT" == 'n' ]]

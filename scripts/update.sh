@@ -8,7 +8,7 @@ LOCAL=$(git rev-parse HEAD)
 BASE=$(git merge-base HEAD origin/${BRANCH})
 
 if [ $LOCAL = $BASE ]; then
-    echo "Newer version available, would you like to update? y/N"
+    echo "Newer version available, would you like to update? [y/N]"
     read -r UPDATE
     if [[ "${UPDATE}" != 'y' ]]
     then
