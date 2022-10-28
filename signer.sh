@@ -26,7 +26,8 @@ CONTAINER_NAME="aleph-signer"
 SIGNER_VERSION="fca5dd5"
 NODE_KEY_PATH="/data/p2p_secret"
 SIGNER_IMAGE=public.ecr.aws/p6e8q1z1/peer-verifier:${SIGNER_VERSION}
-HOST_SECRET_PATH="$(pwd)/p2p_secret"
+ALEPH_DIRECTORY="${HOME}/.alephzero"
+HOST_SECRET_PATH="${ALEPH_DIRECTORY}/p2p_secret"
 
 
 while [[ $# -gt 0 ]]; do
