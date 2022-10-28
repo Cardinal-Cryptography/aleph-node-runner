@@ -158,6 +158,7 @@ then
                -u $(id -u):$(id -g) \
                --mount type=bind,source=${HOST_BASE_PATH},target=${BASE_PATH} \
                --name ${NAME} \
+               --restart unless-stopped \
                -d ${ALEPH_IMAGE}
 fi
 
