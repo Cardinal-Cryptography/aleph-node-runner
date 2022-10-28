@@ -45,6 +45,6 @@ The script allows you to customize the run in several ways, as listed below:
 * `--build_only`: the script will only download and setup everything but will not actually run the binary in case you don't want to join the network yet
 * `--image`: you can provide the name and tag of your own Aleph Node image in case you don't want to use one from the official image repository
 * `--archivist`: (as described above) run the node as an archivist instead of a validator
-* `--name`: (as described above) provide the name of the node. If you omit this option, one will be generated for you but it's not encouraged.
+* `--name`: (as described above) set the name of the node. If you omit this option, one will be generated for you but it's not encouraged.
 * `--stash_account`: provide `AccountId` of the stash account linked to your validator node. If you run as validator, then this argument is mandatory.
 
