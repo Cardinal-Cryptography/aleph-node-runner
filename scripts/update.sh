@@ -1,13 +1,9 @@
 #!/bin/bash
 
-set -eo pipefail
-
 git remote update
-BRANCH=$(git rev-parse --abbrev-ref HEAD)
-LOCAL=$(git rev-parse HEAD)
-BASE=$(git merge-base HEAD origin/${BRANCH})
+RES=$(git status -uno | grep behind)
 
-if [ $LOCAL = $BASE ]; then
+if [ $? -eq 0 ]; then
     echo "Newer version available, would you like to update? [y/N]"
     read -r UPDATE
     if [[ "${UPDATE}" != 'y' ]]
