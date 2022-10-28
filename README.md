@@ -37,7 +37,7 @@ The default is to run the node as a validator. Should you choose to run as an ar
 
 ## Additional options
 
-The script allows you to customize the run in several ways, as listed below.
+The script allows you to customize the run in several ways, as listed below:
 
 * `--data_dir`: specify the directory in which all of the chain data will be stored (defaults to `~/.alephzero`)
 * `--mainnet`: join the Aleph Mainnet instead of the default Testnet
