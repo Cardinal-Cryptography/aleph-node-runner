@@ -4,9 +4,15 @@ git remote update
 RES=$(git status -uno | grep behind)
 
 if [ $? -eq 0 ]; then
-    echo "Newer version available, would you like to update? [y/N]"
-    read -r UPDATE
-    if [[ "${UPDATE}" != 'y' ]]
+    echo "Newer version available, would you like to update? [Y/n]"
+    if [[ "$PROMPTS" = true ]]
+    then
+        read -r UPDATE
+    else
+        UPDATE='y'
+    fi
+
+    if [[ "${UPDATE}" -eq 'n' ]]
     then
         echo "Skipping the update. You can still do it manually using git."
         exit 0

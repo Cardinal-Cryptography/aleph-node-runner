@@ -47,4 +47,5 @@ The script allows you to customize the run in several ways, as listed below:
 * `--archivist`: (as described above) run the node as an archivist instead of a validator
 * `--name`: (as described above) set the name of the node. If you omit this option, one will be generated for you but it's not encouraged.
 * `--stash_account`: provide `AccountId` of the stash account linked to your validator node. If you run as validator, then this argument is mandatory.
+* `--no_prompts`: skip all prompts and use the default choices: useful for setups involving a supervisor like systemd.
 
