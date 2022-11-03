@@ -9,6 +9,8 @@ Help()
     echo
     echo "options:"
     echo "archivist         Run the node as an archivist (the default is to run as a validator)"
+    echo "ip                The public IP of your node."
+    echo "dns               The public DNS of your node."
     echo "stash_account     Stash account of your validator: optional but recommended, if you're re-running the script."
     echo "n | name          Set the node's name."
     echo "d | data_dir      Specify the directory where all the chain data will be stored (default: ~/.alephzero)."
@@ -25,8 +27,6 @@ Help()
     echo "./run_node.sh --n my-aleph-node --mainnet --stash_account 5CeeD3MGHCvZecJkvfJVzYvYkoPtw9pTVvskutXAUtZtjcYa"
     echo
 }
-
-
 
 
 # The defaults
@@ -48,6 +48,12 @@ while [[ $# -gt 0 ]]; do
         --archivist) # Run as an archivist
             ARCHIVIST=true
             shift;;
+        --ip)
+            PUBLIC_IP="$2"
+            shift 2;;
+        --dns)
+            PUBLIC_DNS="$2"
+            shift 2;;
         -n | --name) # Enter a name
             NAME="$2"
             shift 2;;
@@ -81,6 +87,12 @@ while [[ $# -gt 0 ]]; do
             exit;;
   esac
 done
+
+if [ -z "${PUBLIC_IP}" ] && [ -z "${PUBLIC_DNS}" ]
+then
+    echo "You need to provide either a public ip (--ip) or a public dns (--dns)."
+    exit 1
+fi
 
 ALEPH_VERSION=$(cat env/version)
 
@@ -138,6 +150,19 @@ then
         source env/validator
         eval "echo \"$(cat env/validator)\"" > env/validator.env
         ENV_FILE="env/validator.env"
+
+        # setup public addresses
+        if [[ -n "${PUBLIC_DNS}" ]]
+        then
+            PUBLIC_ADDR="/dns4/${PUBLIC_DNS}/tcp/${PORT}"
+            PUBLIC_VALIDATOR_ADDRESS="${PUBLIC_DNS}:${VALIDATOR_PORT}"
+        else
+            PUBLIC_ADDR="/ip4/${PUBLIC_IP}/tcp/${PORT}"
+            PUBLIC_VALIDATOR_ADDRESS="${PUBLIC_IP}:${VALIDATOR_PORT}"
+        fi
+
+        echo "Running with public P2P address: ${PUBLIC_ADDR}"
+        echo "And validator address: ${PUBLIC_VALIDATOR_ADDRESS}."
     else
         source env/archivist
         eval "echo \"$(cat env/archivist)\"" > env/archivist.env
@@ -145,15 +170,19 @@ then
     fi
 
     PORT_MAP="${PORT}:${PORT}"
+    VALIDATOR_PORT_MAP="${VALIDATOR_PORT}":"${VALIDATOR_PORT}"
 
     # remove the container if it exists
     if [ "$(docker ps -aq -f status=exited -f name=${NAME})" ]; then
         docker rm ${NAME}
     fi
     docker run --env-file ${ENV_FILE} \
+               --env PUBLIC_ADDR="${PUBLIC_ADDR}" \
+               --env PUBLIC_VALIDATOR_ADDRESS="${PUBLIC_VALIDATOR_ADDRESS}" \
                -p ${RPC_PORT_MAP} \
                -p ${WS_PORT_MAP} \
                -p ${PORT_MAP} \
+               -p ${VALIDATOR_PORT_MAP} \
                -p ${METRICS_PORT_MAP} \
                -u $(id -u):$(id -g) \
                --mount type=bind,source=${HOST_BASE_PATH},target=${BASE_PATH} \
