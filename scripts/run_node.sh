@@ -90,7 +90,7 @@ done
 
 if [ -z "${PUBLIC_IP}" ] && [ -z "${PUBLIC_DNS}" ]
 then
-    echo "You need to provide either a public ip (--ip) or a public dns (--dns)."
+    echo "You need to provide either a public ip address of your node (--ip) or a public dns address of your node (--dns)."
     exit 1
 fi
 
