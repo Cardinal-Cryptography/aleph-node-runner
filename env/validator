@@ -21,4 +21,5 @@ PORT_MAP="${PORT}:${PORT}"
 VALIDATOR_PORT_MAP="${VALIDATOR_PORT}:${VALIDATOR_PORT}"
 METRICS_PORT_MAP="127.0.0.1:${METRICS_PORT}:${METRICS_PORT}"
 TELEMETRY_ENABLED=true
-CUSTOM_ARGS="--telemetry-url \'wss://telemetry.polkadot.io/submit/ 1\'"
+TELEMETRY_URL="wss://telemetry.polkadot.io/submit/"
+TELEMETRY_VERBOSITY_LVL="1"
