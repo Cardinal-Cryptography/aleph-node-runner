@@ -7,12 +7,12 @@ if [ $? -eq 0 ]; then
     echo "Newer version available, would you like to update? [Y/n]"
     if [[ "$PROMPTS" = true ]]
     then
-        read -r UPDATE
+        read -r -n 1 UPDATE
     else
         UPDATE='y'
     fi
 
-    if [[ "${UPDATE}" -eq 'n' ]]
+    if [[ "${UPDATE}" = 'n' ]]
     then
         echo "Skipping the update. You can still do it manually using git."
         exit 0

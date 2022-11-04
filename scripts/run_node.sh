@@ -15,12 +15,12 @@ then
     
     if [[ "$PROMPTS" = true ]]
     then
-        read -r CONT
+        read -r -n 1 CONT
     else
         CONT='y'
     fi
 
-    if [[ "$CONT" -eq 'n' ]]
+    if [[ "$CONT" = 'n' ]]
     then
         echo "Please re-run the script, supplying the '--data_dir' argument, exiting."
         exit 0
