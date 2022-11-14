@@ -278,8 +278,7 @@ then
 else
     echo ""
     echo "Specified account do not have any session keys set."
-    echo "You should generate and set the keys to be able to validate."
-    echo "You can use the author::rotateKeys() call (via wallet or a command line RPC call)."
+    echo "Check https://docs.alephzero.org/aleph-zero/validate/troubleshooting#generating-your-session-keys for details"
 fi
 
 exit 0
