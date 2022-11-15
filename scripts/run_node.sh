@@ -21,10 +21,10 @@ Help()
     echo "help              Print this help."
     echo
     echo "Example usage:"
-    echo "./run_node.sh --name my-aleph-node --mainnet --stash_account 5CeeD3MGHCvZecJkvfJVzYvYkoPtw9pTVvskutXAUtZtjcYa"
+    echo "./run_node.sh --name my-aleph-node --stash_account 5CeeD3MGHCvZecJkvfJVzYvYkoPtw9pTVvskutXAUtZtjcYa"
     echo
     echo "or, shorter:"
-    echo "./run_node.sh --n my-aleph-node --mainnet --stash_account 5CeeD3MGHCvZecJkvfJVzYvYkoPtw9pTVvskutXAUtZtjcYa"
+    echo "./run_node.sh --n my-aleph-node --stash_account 5CeeD3MGHCvZecJkvfJVzYvYkoPtw9pTVvskutXAUtZtjcYa"
     echo
 }
 
@@ -145,8 +145,15 @@ fi
 if [ -z "$BUILD_ONLY" ]
 then
     echo "Running the node..."
+
+    # remove the container if it exists
+    if [ "$(docker ps -aq -f status=exited -f name=${NAME})" ]; then
+        docker rm ${NAME}
+    fi
+
     if [ -z "$ARCHIVIST" ]
     then
+        ###### VALIDATOR ######
         source env/validator
         eval "echo \"$(cat env/validator)\"" > env/validator.env
         ENV_FILE="env/validator.env"
@@ -163,32 +170,53 @@ then
 
         echo "Running with public P2P address: ${PUBLIC_ADDR}"
         echo "And validator address: ${PUBLIC_VALIDATOR_ADDRESS}."
+
+        PORT_MAP="${PORT}:${PORT}"
+        VALIDATOR_PORT_MAP="${VALIDATOR_PORT}":"${VALIDATOR_PORT}"
+
+        docker run --env-file ${ENV_FILE} \
+                   --env PUBLIC_ADDR="${PUBLIC_ADDR}" \
+                   --env PUBLIC_VALIDATOR_ADDRESS="${PUBLIC_VALIDATOR_ADDRESS}" \
+                   -p ${RPC_PORT_MAP} \
+                   -p ${WS_PORT_MAP} \
+                   -p ${PORT_MAP} \
+                   -p ${VALIDATOR_PORT_MAP} \
+                   -p ${METRICS_PORT_MAP} \
+                   -u $(id -u):$(id -g) \
+                   --mount type=bind,source=${HOST_BASE_PATH},target=${BASE_PATH} \
+                   --name ${NAME} \
+                   --restart unless-stopped \
+                   -d ${ALEPH_IMAGE}
+
     else
+        ###### ARCHIVIST #######
         source env/archivist
         eval "echo \"$(cat env/archivist)\"" > env/archivist.env
         ENV_FILE="env/archivist.env"
-    fi
 
-    PORT_MAP="${PORT}:${PORT}"
-    VALIDATOR_PORT_MAP="${VALIDATOR_PORT}":"${VALIDATOR_PORT}"
+        if [[ -n "${PUBLIC_DNS}" ]]
+        then
+            PUBLIC_ADDR="/dns4/${PUBLIC_DNS}/tcp/${PORT}"
+        else
+            PUBLIC_ADDR="/ip4/${PUBLIC_IP}/tcp/${PORT}"
+        fi
 
-    # remove the container if it exists
-    if [ "$(docker ps -aq -f status=exited -f name=${NAME})" ]; then
-        docker rm ${NAME}
+        echo "Running with public P2P address: ${PUBLIC_ADDR}"
+
+        PORT_MAP="${PORT}:${PORT}"
+
+        docker run --env-file ${ENV_FILE} \
+                   --env PUBLIC_ADDR="${PUBLIC_ADDR}" \
+                   -p ${RPC_PORT_MAP} \
+                   -p ${WS_PORT_MAP} \
+                   -p ${PORT_MAP} \
+                   -p ${METRICS_PORT_MAP} \
+                   -u $(id -u):$(id -g) \
+                   --mount type=bind,source=${HOST_BASE_PATH},target=${BASE_PATH} \
+                   --name ${NAME} \
+                   --restart unless-stopped \
+                   -d ${ALEPH_IMAGE}
     fi
-    docker run --env-file ${ENV_FILE} \
-               --env PUBLIC_ADDR="${PUBLIC_ADDR}" \
-               --env PUBLIC_VALIDATOR_ADDRESS="${PUBLIC_VALIDATOR_ADDRESS}" \
-               -p ${RPC_PORT_MAP} \
-               -p ${WS_PORT_MAP} \
-               -p ${PORT_MAP} \
-               -p ${VALIDATOR_PORT_MAP} \
-               -p ${METRICS_PORT_MAP} \
-               -u $(id -u):$(id -g) \
-               --mount type=bind,source=${HOST_BASE_PATH},target=${BASE_PATH} \
-               --name ${NAME} \
-               --restart unless-stopped \
-               -d ${ALEPH_IMAGE}
 fi
 
 if [[ -n "${ARCHIVIST}" ]]
