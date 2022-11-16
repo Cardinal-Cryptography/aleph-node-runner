@@ -21,7 +21,7 @@ Once inside the `aleph-node-runner` folder, run:
 ./run_node.sh --name <your_nodes_name> --ip <your IP>  --stash_account <validator_stash_account_id>
 ```
 
-It might take quite some time before you actually get the node running: the script will first download required files, including a database snapshot (sized ~100GB). You can alternatively skip this step by providing the `--skip` flag (see the 'Additional Options' section). The script will then run the node for you and you should start seeing some block-related output.
+It might take quite some time before you actually get the node running: the script will first download required files, including a database snapshot (sized ~100GB). You can alternatively skip this step by providing the `--sync_from_genesis` flag (see the 'Additional Options' section). The script will then run the node for you and you should start seeing some block-related output.
 
 > 💡 The choice of <code>your_nodes_name</code> is entirely up to you but for the sake of more comprehensible logs please try using something unique and memorable.
 

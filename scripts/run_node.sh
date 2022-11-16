@@ -21,10 +21,10 @@ Help()
     echo "help              Print this help."
     echo
     echo "Example usage:"
-    echo "./run_node.sh --name my-aleph-node --mainnet --stash_account 5CeeD3MGHCvZecJkvfJVzYvYkoPtw9pTVvskutXAUtZtjcYa"
+    echo "./run_node.sh --name my-aleph-node --stash_account 5CeeD3MGHCvZecJkvfJVzYvYkoPtw9pTVvskutXAUtZtjcYa"
     echo
     echo "or, shorter:"
-    echo "./run_node.sh --n my-aleph-node --mainnet --stash_account 5CeeD3MGHCvZecJkvfJVzYvYkoPtw9pTVvskutXAUtZtjcYa"
+    echo "./run_node.sh --n my-aleph-node --stash_account 5CeeD3MGHCvZecJkvfJVzYvYkoPtw9pTVvskutXAUtZtjcYa"
     echo
 }
 
@@ -145,8 +145,15 @@ fi
 if [ -z "$BUILD_ONLY" ]
 then
     echo "Running the node..."
+
+    # remove the container if it exists
+    if [ "$(docker ps -aq -f status=exited -f name=${NAME})" ]; then
+        docker rm ${NAME}
+    fi
+
     if [ -z "$ARCHIVIST" ]
     then
+        ###### VALIDATOR ######
         source env/validator
         eval "echo \"$(cat env/validator)\"" > env/validator.env
         ENV_FILE="env/validator.env"
@@ -163,32 +170,53 @@ then
 
         echo "Running with public P2P address: ${PUBLIC_ADDR}"
         echo "And validator address: ${PUBLIC_VALIDATOR_ADDRESS}."
+
+        PORT_MAP="${PORT}:${PORT}"
+        VALIDATOR_PORT_MAP="${VALIDATOR_PORT}":"${VALIDATOR_PORT}"
+
+        docker run --env-file ${ENV_FILE} \
+                   --env PUBLIC_ADDR="${PUBLIC_ADDR}" \
+                   --env PUBLIC_VALIDATOR_ADDRESS="${PUBLIC_VALIDATOR_ADDRESS}" \
+                   -p ${RPC_PORT_MAP} \
+                   -p ${WS_PORT_MAP} \
+                   -p ${PORT_MAP} \
+                   -p ${VALIDATOR_PORT_MAP} \
+                   -p ${METRICS_PORT_MAP} \
+                   -u $(id -u):$(id -g) \
+                   --mount type=bind,source=${HOST_BASE_PATH},target=${BASE_PATH} \
+                   --name ${NAME} \
+                   --restart unless-stopped \
+                   -d ${ALEPH_IMAGE}
+
     else
+        ###### ARCHIVIST #######
         source env/archivist
         eval "echo \"$(cat env/archivist)\"" > env/archivist.env
         ENV_FILE="env/archivist.env"
-    fi
 
-    PORT_MAP="${PORT}:${PORT}"
-    VALIDATOR_PORT_MAP="${VALIDATOR_PORT}":"${VALIDATOR_PORT}"
+        if [[ -n "${PUBLIC_DNS}" ]]
+        then
+            PUBLIC_ADDR="/dns4/${PUBLIC_DNS}/tcp/${PORT}"
+        else
+            PUBLIC_ADDR="/ip4/${PUBLIC_IP}/tcp/${PORT}"
+        fi
 
-    # remove the container if it exists
-    if [ "$(docker ps -aq -f status=exited -f name=${NAME})" ]; then
-        docker rm ${NAME}
+        echo "Running with public P2P address: ${PUBLIC_ADDR}"
+
+        PORT_MAP="${PORT}:${PORT}"
+
+        docker run --env-file ${ENV_FILE} \
+                   --env PUBLIC_ADDR="${PUBLIC_ADDR}" \
+                   -p ${RPC_PORT_MAP} \
+                   -p ${WS_PORT_MAP} \
+                   -p ${PORT_MAP} \
+                   -p ${METRICS_PORT_MAP} \
+                   -u $(id -u):$(id -g) \
+                   --mount type=bind,source=${HOST_BASE_PATH},target=${BASE_PATH} \
+                   --name ${NAME} \
+                   --restart unless-stopped \
+                   -d ${ALEPH_IMAGE}
     fi
-    docker run --env-file ${ENV_FILE} \
-               --env PUBLIC_ADDR="${PUBLIC_ADDR}" \
-               --env PUBLIC_VALIDATOR_ADDRESS="${PUBLIC_VALIDATOR_ADDRESS}" \
-               -p ${RPC_PORT_MAP} \
-               -p ${WS_PORT_MAP} \
-               -p ${PORT_MAP} \
-               -p ${VALIDATOR_PORT_MAP} \
-               -p ${METRICS_PORT_MAP} \
-               -u $(id -u):$(id -g) \
-               --mount type=bind,source=${HOST_BASE_PATH},target=${BASE_PATH} \
-               --name ${NAME} \
-               --restart unless-stopped \
-               -d ${ALEPH_IMAGE}
 fi
 
 if [[ -n "${ARCHIVIST}" ]]
@@ -278,39 +306,7 @@ then
 else
     echo ""
     echo "Specified account do not have any session keys set."
-    echo "You should generate and set the keys to be able to validate."
-
-    read -p "Do you want to generate new session keys? [y/N] " -n 1 -r
-    if [[ ${REPLY} =~ ^[Yy]$ ]]
-    then
-        echo ""
-        echo "Generating new session keys..."
-        NEW_KEYS_JSON=$(curl -H "Content-Type: application/json" -d '{"id":1,
-            "jsonrpc":"2.0", "method": "author_rotateKeys"}' http://127.0.0.1:"${RPC_PORT}")
-
-        NEW_KEYS=$(echo ${NEW_KEYS_JSON} | docker run -i "${JQ_IMAGE}" '.result' | tr -d '"')
-        echo "New session keys: ${NEW_KEYS}"
-
-        echo "Now, you should set those newly generated keys for your stash account."
-        echo "You may do it your preferred way, eg. using web wallet, or set them now by providing mnemonic seed to your stash account."
-        read -p "Do you want to set your keys using mnemonic seed for ${STASH_ACCOUNT}? [y/N] " -n 1 -r
-        echo
-        if [[ ${REPLY} =~ ^[Yy]$ ]]
-        then
-            # Try to set, tell if the operation was successful
-            CLIAIN_NAME="cliain-$(xxd -l "16" -p /dev/urandom | tr -d " \n" ; echo)"
-            if docker run --rm --name="${CLIAIN_NAME}" -it "${CLIAIN_IMAGE}" --node "${CLIAIN_ENDPOINT}" \
-                set-keys --new-keys "${NEW_KEYS}";
-            then
-                echo ""
-                echo "Session keys succesfully set."
-            else
-                echo ""
-                echo "Set keys failed. You will need to set them manualy."
-                exit 1
-            fi
-        fi
-    fi
+    echo "Check https://docs.alephzero.org/aleph-zero/validate/troubleshooting#generating-your-session-keys for details"
 fi
 
 exit 0
