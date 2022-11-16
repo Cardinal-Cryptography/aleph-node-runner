@@ -78,6 +78,12 @@ while [[ $# -gt 0 ]]; do
         --stash_account)
             STASH_ACCOUNT=$2
             shift 2;;
+        --proxy_port)
+            PROXY_PORT=$2
+            shift 2;;
+        --proxy_validator_port)
+            PROXY_VALIDATOR_PORT=$2
+            shift 2;;
         -* | --* )
             echo "Warning: unrecognized option: $1"
             exit;; 
@@ -158,18 +164,21 @@ then
         eval "echo \"$(cat env/validator)\"" > env/validator.env
         ENV_FILE="env/validator.env"
 
+        PROXY_PORT=${PROXY_PORT:-$PORT}
+        PROXY_VALIDATOR_PORT=${PROXY_VALIDATOR_PORT:-$VALIDATOR_PORT}
+
         # setup public addresses
         if [[ -n "${PUBLIC_DNS}" ]]
         then
-            PUBLIC_ADDR="/dns4/${PUBLIC_DNS}/tcp/${PORT}"
-            PUBLIC_VALIDATOR_ADDRESS="${PUBLIC_DNS}:${VALIDATOR_PORT}"
+            PUBLIC_ADDR="/dns4/${PUBLIC_DNS}/tcp/${PROXY_PORT}"
+            PUBLIC_VALIDATOR_ADDRESS="${PUBLIC_DNS}:${PROXY_VALIDATOR_PORT}"
         else
-            PUBLIC_ADDR="/ip4/${PUBLIC_IP}/tcp/${PORT}"
-            PUBLIC_VALIDATOR_ADDRESS="${PUBLIC_IP}:${VALIDATOR_PORT}"
+            PUBLIC_ADDR="/ip4/${PUBLIC_IP}/tcp/${PROXY_PORT}"
+            PUBLIC_VALIDATOR_ADDRESS="${PUBLIC_IP}:${PROXY_VALIDATOR_PORT}"
         fi
 
         echo "Running with public P2P address: ${PUBLIC_ADDR}"
-        echo "And validator address: ${PUBLIC_VALIDATOR_ADDRESS}."
+        echo "And validator address: ${PUBLIC_VALIDATOR_ADDRESS}"
 
         PORT_MAP="${PORT}:${PORT}"
         VALIDATOR_PORT_MAP="${VALIDATOR_PORT}":"${VALIDATOR_PORT}"
@@ -194,11 +203,13 @@ then
         eval "echo \"$(cat env/archivist)\"" > env/archivist.env
         ENV_FILE="env/archivist.env"
 
+        PROXY_PORT=${PROXY_PORT:-$PORT}
+
         if [[ -n "${PUBLIC_DNS}" ]]
         then
-            PUBLIC_ADDR="/dns4/${PUBLIC_DNS}/tcp/${PORT}"
+            PUBLIC_ADDR="/dns4/${PUBLIC_DNS}/tcp/${PROXY_PORT}"
         else
-            PUBLIC_ADDR="/ip4/${PUBLIC_IP}/tcp/${PORT}"
+            PUBLIC_ADDR="/ip4/${PUBLIC_IP}/tcp/${PROXY_PORT}"
         fi
 
         echo "Running with public P2P address: ${PUBLIC_ADDR}"
