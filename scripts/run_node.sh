@@ -245,7 +245,7 @@ fi
 
 ## Now we will attempt to check validator's session keys
 CLIAIN_IMAGE='public.ecr.aws/p6e8q1z1/cliain:latest'
-CLIAIN_ENDPOINT='wss://ws.test.azero.dev/'
+CLIAIN_ENDPOINT='wss://ws.test.azero.dev:443'
 JQ_IMAGE='stedolan/jq:latest'
 
 # Pull cliain from ecr
