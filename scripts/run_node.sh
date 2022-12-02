@@ -39,7 +39,6 @@ MAINNET_DB_SNAPSHOT_URL="https://db.azero.dev/latest.html"
 DB_SNAPSHOT_PATH="chains/testnet/"     # testnet by default
 CHAINSPEC_FILE="testnet_chainspec.json"
 
-
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -h | --help) # display Help
@@ -64,6 +63,7 @@ while [[ $# -gt 0 ]]; do
             DB_SNAPSHOT_PATH="chains/mainnet/"
             CHAINSPEC_FILE="mainnet_chainspec.json"
             DB_SNAPSHOT_URL="${MAINNET_DB_SNAPSHOT_URL}"
+            MAINNET=true
             shift;;
         -i | --image) # Enter a base path
             ALEPH_IMAGE="$2"
@@ -100,7 +100,12 @@ then
     exit 1
 fi
 
-ALEPH_VERSION=$(cat env/version)
+if  [ -n "${MAINNET}" ]
+then
+    ALEPH_VERSION=$(cat env/version_mainnet)
+else
+    ALEPH_VERSION=$(cat env/version)
+fi
 
 if [ ! -d "${HOST_BASE_PATH}/${DB_SNAPSHOT_PATH}" ] && [ -d "${DB_SNAPSHOT_PATH}/keystore" ]
 then
@@ -160,9 +165,16 @@ then
     if [ -z "$ARCHIVIST" ]
     then
         ###### VALIDATOR ######
-        source env/validator
-        eval "echo \"$(cat env/validator)\"" > env/validator.env
-        ENV_FILE="env/validator.env"
+        if [ -n "$MAINNET" ]
+        then
+            source env/validator_mainnet
+            eval "echo \"$(cat env/validator_mainnet)\"" > env/validator_mainnet.env
+            ENV_FILE="env/validator_mainnet.env"
+        else
+            source env/validator
+            eval "echo \"$(cat env/validator)\"" > env/validator.env
+            ENV_FILE="env/validator.env"
+        fi
 
         PROXY_PORT=${PROXY_PORT:-$PORT}
         PROXY_VALIDATOR_PORT=${PROXY_VALIDATOR_PORT:-$VALIDATOR_PORT}
@@ -199,9 +211,17 @@ then
 
     else
         ###### ARCHIVIST #######
-        source env/archivist
-        eval "echo \"$(cat env/archivist)\"" > env/archivist.env
-        ENV_FILE="env/archivist.env"
+        if [ -n "$MAINNET" ]
+        then
+            source env/archivist_mainnet
+            eval "echo \"$(cat env/archivist_mainnet)\"" > env/archivist_mainnet.env
+            ENV_FILE="env/archivist_mainnet.env"
+        else
+            source env/archivist
+            eval "echo \"$(cat env/archivist)\"" > env/archivist.env
+            ENV_FILE="env/archivist.env"
+        fi
+
 
         PROXY_PORT=${PROXY_PORT:-$PORT}
 
