@@ -168,12 +168,13 @@ then
         if [ -n "$MAINNET" ]
         then
             source env/validator_mainnet
-            eval "echo \"$(cat env/validator_mainnet)\"" > env/validator.env
+            eval "echo \"$(cat env/validator_mainnet)\"" > env/validator_mainnet.env
+            ENV_FILE="env/validator_mainnet.env"
         else
             source env/validator
             eval "echo \"$(cat env/validator)\"" > env/validator.env
+            ENV_FILE="env/validator.env"
         fi
-        ENV_FILE="env/validator.env"
 
         PROXY_PORT=${PROXY_PORT:-$PORT}
         PROXY_VALIDATOR_PORT=${PROXY_VALIDATOR_PORT:-$VALIDATOR_PORT}
@@ -213,13 +214,14 @@ then
         if [ -n "$MAINNET" ]
         then
             source env/archivist_mainnet
-            eval "echo \"$(cat env/archivist_mainnet)\"" > env/archivist.env
+            eval "echo \"$(cat env/archivist_mainnet)\"" > env/archivist_mainnet.env
+            ENV_FILE="env/archivist_mainnet.env"
         else
             source env/archivist
             eval "echo \"$(cat env/archivist)\"" > env/archivist.env
+            ENV_FILE="env/archivist.env"
         fi
 
-        ENV_FILE="env/archivist.env"
 
         PROXY_PORT=${PROXY_PORT:-$PORT}
 

@@ -1,6 +1,8 @@
 p2p_secret
 env/archivist.env
+env/archivist_mainnet.env
 env/validator.env
+env/validator_mainnet.env
 chains/mainnet/*
 !chains/mainnet/.gitkeep
 chains/testnet/*
