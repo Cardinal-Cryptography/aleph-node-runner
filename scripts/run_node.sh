@@ -102,7 +102,7 @@ fi
 
 if  [ -n "${MAINNET}" ]
 then
-    ALEPH_VERSION=$(cat env/mainnet_version)
+    ALEPH_VERSION=$(cat env/version_mainnet)
 else
     ALEPH_VERSION=$(cat env/version)
 fi
