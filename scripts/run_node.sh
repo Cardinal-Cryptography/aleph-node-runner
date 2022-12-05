@@ -63,6 +63,7 @@ while [[ $# -gt 0 ]]; do
             DB_SNAPSHOT_PATH="chains/mainnet/"
             CHAINSPEC_FILE="mainnet_chainspec.json"
             DB_SNAPSHOT_URL="${MAINNET_DB_SNAPSHOT_URL}"
+            CLIAIN_ENDPOINT='wss://ws.azero.dev:443'
             MAINNET=true
             shift;;
         -i | --image) # Enter a base path
@@ -86,7 +87,7 @@ while [[ $# -gt 0 ]]; do
             shift 2;;
         -* | --* )
             echo "Warning: unrecognized option: $1"
-            exit;; 
+            exit;;
         *)
             echo "Unrecognized command"
             Help
@@ -276,7 +277,7 @@ fi
 
 ## Now we will attempt to check validator's session keys
 CLIAIN_IMAGE='public.ecr.aws/p6e8q1z1/cliain:latest'
-CLIAIN_ENDPOINT='wss://ws.test.azero.dev:443'
+CLIAIN_ENDPOINT=${CLIAIN_ENDPOINT:-'wss://ws.test.azero.dev:443'}
 JQ_IMAGE='stedolan/jq:latest'
 
 # Pull cliain from ecr
