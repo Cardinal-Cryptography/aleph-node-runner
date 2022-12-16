@@ -2,6 +2,8 @@
 
 A convenience wrapper for running a node, using the Aleph Node docker image under the hood.
 
+Note that this tool always mainatins the latest versions for Testnet and Mainnet (and auto-updates itself). **There should never be a reason to have it on anything else than the latest `main` branch commit.**
+
 ## Prerequisites
 
 You will need `docker` and `wget`. If you are using Linux, we recommend that you add your user to the `docker` group so that using `docker` doesn’t require sudo access. You can find the instructions [here](https://docs.docker.com/engine/install/linux-postinstall/).
