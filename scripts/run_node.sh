@@ -34,8 +34,8 @@ NAME="aleph-node-$(xxd -l "16" -p /dev/urandom | tr -d " \n" ; echo)"
 BASE_PATH="/data"
 HOST_BASE_PATH="${HOME}/.alephzero"
 DB_SNAPSHOT_FILE="db_backup.tar.gz"
-DB_SNAPSHOT_URL="https://db.test.azero.dev/latest.html"
-MAINNET_DB_SNAPSHOT_URL="https://db.azero.dev/latest.html"
+DB_SNAPSHOT_URL="http://db.test.azero.dev.s3-website.eu-central-1.amazonaws.com/latest.html"
+MAINNET_DB_SNAPSHOT_URL="http://db.azero.dev.s3-website.eu-central-1.amazonaws.com/latest.html"
 DB_SNAPSHOT_PATH="chains/testnet/"     # testnet by default
 CHAINSPEC_FILE="testnet_chainspec.json"
 
