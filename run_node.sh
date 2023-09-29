@@ -339,6 +339,12 @@ then
     exit 0
 fi
 
+if [[ -n "${LOCAL}" ]]
+then
+    echo 'Node run locally: no need to check session keys.'
+    exit 0
+fi
+
 echo ""
 echo 'Performing session key checks...'
 
