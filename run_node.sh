@@ -5,7 +5,7 @@ set -eo pipefail
 Help()
 {
     echo "Run the aleph-node as either a validator or an archivist."
-    echo "Syntax: ./run_node.sh [--<name|image|stash_account> <value>] [--<archivist|mainnet|build_only|sync_from_genesis>] --ip|dns <value>" 
+    echo "Syntax: $0 [--<name|stash_account> <value>] [--<archivist|mainnet|build_only|sync_from_genesis>] --ip|dns <value>" 
     echo
     echo "options:"
     echo "archivist         Run the node as an archivist (the default is to run as a validator)"
@@ -15,22 +15,16 @@ Help()
     echo "n | name          Set the node's name."
     echo "d | data_dir      Specify the directory where all the chain data will be stored (default: ~/.alephzero)."
     echo "mainnet           Join the mainnet (by default the script will join testnet)."
-    echo "i | image         Specify the Docker image to use"
     echo "build_only        Do not run after the setup."
     echo "sync_from_genesis Perform a full sync instead of downloading the backup."
     echo "help              Print this help."
     echo
     echo "Example usage:"
-    echo "./run_node.sh --name my-aleph-node --stash_account 5CeeD3MGHCvZecJkvfJVzYvYkoPtw9pTVvskutXAUtZtjcYa --ip 123.123.123.123"
-    echo
-    echo "or, shorter:"
-    echo "./run_node.sh --n my-aleph-node --stash_account 5CeeD3MGHCvZecJkvfJVzYvYkoPtw9pTVvskutXAUtZtjcYa --ip 123.123.123.123"
+    echo "$0 --name my-aleph-node --stash_account 5CeeD3MGHCvZecJkvfJVzYvYkoPtw9pTVvskutXAUtZtjcYa --ip 123.123.123.123"
     echo
 }
 
 get_version () {
-    # Do our best to establish the version to run.
-    # In case of running locally, we just return 'local'.
     # In case of testnet and mainnet, we get the version by making the System::version RPC call.
     # The version that is returned by the extrinsic looks like: 0.11.4-ae34eb4213
     # so we take the hash part and use it to identify docker images and commits in the repo.
@@ -42,8 +36,11 @@ get_version () {
         VERSION_RPC_URL="https://rpc.test.azero.dev"
     fi
 
+    # call the RPC endpoint to get the version
     VERSION_INFO=$(curl -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "system_version"}' ${VERSION_RPC_URL})
+    # use jq to parse the resulting json, get the value of the version field and strip quotes
     VERSION_INFO=$(echo "${VERSION_INFO}" | docker run -i "${JQ_IMAGE}" '.result' | tr -d '"')
+    # only return the commit hash that comes after a '-'
     ALEPH_VERSION=${VERSION_INFO##*-}
 }
 
@@ -97,12 +94,9 @@ get_chainspec () {
 }
 
 get_docker_image () {
-    if [ -z "${ALEPH_IMAGE}" ]
-    then
-        echo "Pulling docker image..."
-        ALEPH_IMAGE=public.ecr.aws/p6e8q1z1/aleph-node:${ALEPH_VERSION:0:7}
-        docker pull "${ALEPH_IMAGE}"
-    fi
+    echo "Pulling docker image..."
+    ALEPH_IMAGE=public.ecr.aws/p6e8q1z1/aleph-node:${ALEPH_VERSION:0:7}
+    docker pull "${ALEPH_IMAGE}"
 }
 
 run_validator () {
@@ -226,15 +220,6 @@ while [[ $# -gt 0 ]]; do
             CLIAIN_ENDPOINT='wss://ws.azero.dev:443'
             MAINNET=true
             shift;;
-        --local) # Bootstrap a local network
-            CHAINSPEC_FILE="local_chainspec.json"
-            CLIAIN_ENDPOINT='wss://ws.azero.dev:443'
-            MAINNET=false
-            LOCAL=true
-            shift;;
-        -i | --image) # Enter a base path
-            ALEPH_IMAGE="$2"
-            shift 2;;
         --build_only)
             BUILD_ONLY=true
             shift;;
