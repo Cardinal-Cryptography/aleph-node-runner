@@ -4,24 +4,26 @@ set -eo pipefail
 
 Help()
 {
-    echo "Run the aleph-node as either a validator or an archivist."
-    echo "Syntax: $0 [--<name|stash_account> <value>] [--<archivist|mainnet|build_only|sync_from_genesis>] --ip|dns <value>" 
-    echo
-    echo "options:"
-    echo "archivist         Run the node as an archivist (the default is to run as a validator)"
-    echo "ip                The public IP of your node."
-    echo "dns               The public DNS of your node."
-    echo "stash_account     Stash account of your validator: optional but recommended, if you're re-running the script."
-    echo "n | name          Set the node's name."
-    echo "d | data_dir      Specify the directory where all the chain data will be stored (default: ~/.alephzero)."
-    echo "mainnet           Join the mainnet (by default the script will join testnet)."
-    echo "build_only        Do not run after the setup."
-    echo "sync_from_genesis Perform a full sync instead of downloading the backup."
-    echo "help              Print this help."
-    echo
-    echo "Example usage:"
-    echo "$0 --name my-aleph-node --stash_account 5CeeD3MGHCvZecJkvfJVzYvYkoPtw9pTVvskutXAUtZtjcYa --ip 123.123.123.123"
-    echo
+    cat <<EOF
+Run the aleph-node as either a validator or an archivist.
+Syntax: $0 [--<name|stash_account> <value>] [--<archivist|mainnet|build_only|sync_from_genesis>] --ip|dns <value>
+
+options:
+archivist         Run the node as an archivist (the default is to run as a validator).
+ip                The public IP of your node.
+dns               The public DNS of your node.
+stash_account     Stash account of your validator: optional but recommended, if you're re-running the script.
+n | name          Set the node's name.
+d | data_dir      Specify the directory where all the chain data will be stored (default: ~/.alephzero).
+mainnet           Join the mainnet (by default the script will join testnet).
+build_only        Do not run after the setup.
+sync_from_genesis Perform a full sync instead of downloading the backup.
+help              Print this help.
+
+Example usage:
+$0 --name my-aleph-node --stash_account 5CeeD3MGHCvZecJkvfJVzYvYkoPtw9pTVvskutXAUtZtjcYa --ip 123.123.123.123
+
+EOF
 }
 
 get_version () {
