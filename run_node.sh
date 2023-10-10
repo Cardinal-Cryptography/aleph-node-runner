@@ -130,15 +130,17 @@ run_validator () {
     PORT_MAP="${PORT}:${PORT}"
     VALIDATOR_PORT_MAP="${VALIDATOR_PORT}":"${VALIDATOR_PORT}"
 
+    # we store the port mapping arguments in an array
+    # this allows us to append the WS_PORT_MAP argument only for Mainnet
+    PORT_ARGS=(-p "${PORT_MAP}" -p "${VALIDATOR_PORT_MAP}" -p "${RPC_PORT_MAP}" -p "${METRICS_PORT_MAP}")
+    [[ -n "${MAINNET}" ]] && PORT_ARGS+=(-p "${WS_PORT_MAP}")
+
     docker run --env-file ${ENV_FILE} \
                 --env PUBLIC_ADDR="${PUBLIC_ADDR}" \
                 --env PUBLIC_VALIDATOR_ADDRESS="${PUBLIC_VALIDATOR_ADDRESS}" \
-                -p "${RPC_PORT_MAP}" \
-                -p "${PORT_MAP}" \
-                -p "${VALIDATOR_PORT_MAP}" \
-                -p "${METRICS_PORT_MAP}" \
+                "${PORT_ARGS[@]}" \
                 -u "$(id -u):$(id -g)" \
-                --mount type=bind,source="${HOST_BASE_PATH}",target=${BASE_PATH} \
+                --mount type=bind,source=${HOST_BASE_PATH},target=${BASE_PATH} \
                 --name "${NAME}" \
                 --restart unless-stopped \
                 -d "${ALEPH_IMAGE}"
@@ -170,14 +172,17 @@ run_archivist () {
 
     PORT_MAP="${PORT}:${PORT}"
 
+    # we store the port mapping arguments in an array
+    # this allows us to append the WS_PORT_MAP argument only for Mainnet
+    PORT_ARGS=(-p "${PORT_MAP}" -p "${RPC_PORT_MAP}" -p "${METRICS_PORT_MAP}")
+    [[ -n "${MAINNET}" ]] && PORT_ARGS+=(-p "${WS_PORT_MAP}")
+
     docker run --env-file ${ENV_FILE} \
                 --env PUBLIC_ADDR="${PUBLIC_ADDR}" \
-                -p ${RPC_PORT_MAP} \
-                -p ${PORT_MAP} \
-                -p ${METRICS_PORT_MAP} \
+                "${PORT_ARGS[@]}" \
                 -u "$(id -u):$(id -g)" \
                 --mount type=bind,source=${HOST_BASE_PATH},target=${BASE_PATH} \
-                --name ${NAME} \
+                --name "${NAME}" \
                 --restart unless-stopped \
                 -d "${ALEPH_IMAGE}"
 }
