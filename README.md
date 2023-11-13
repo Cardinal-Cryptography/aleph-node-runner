@@ -2,11 +2,11 @@
 
 A convenience wrapper for running a node, using the Aleph Node docker image under the hood.
 
-Note that this tool always mainatins the latest versions for Testnet and Mainnet (and auto-updates itself). **There should never be a reason to have it on anything else than the latest `main` branch commit.**
+Note that this tool always maintains the latest versions for Testnet and Mainnet (and auto-updates itself). **There should never be a reason to have it on anything else than the latest `main` branch commit.**
 
 ## Prerequisites
 
-You will need `docker` and `wget`. If you are using Linux, we recommend that you add your user to the `docker` group so that using `docker` doesn’t require sudo access. You can find the instructions [here](https://docs.docker.com/engine/install/linux-postinstall/).
+You will need `docker`, `wget` and `curl`. If you are using Linux, we recommend that you add your user to the `docker` group so that using `docker` doesn’t require sudo access. You can find the instructions [here](https://docs.docker.com/engine/install/linux-postinstall/).
 
 Clone the repo at https://github.com/Cardinal-Cryptography/aleph-node-runner:
 
@@ -20,7 +20,7 @@ cd aleph-node-runner
 Once inside the `aleph-node-runner` folder, run:
 
 ```bash
-./run_node.sh --name <your_nodes_name> --ip <your IP>  --stash_account <validator_stash_account_id>
+./run_node.sh --name <your_nodes_name> --ip <your IP>
 ```
 
 It might take quite some time before you actually get the node running: the script will first download required files, including a database snapshot (sized ~100GB). You can alternatively skip this step by providing the `--sync_from_genesis` flag (see the 'Additional Options' section). The script will then run the node for you and you should start seeing some block-related output.
@@ -49,8 +49,7 @@ The script allows you to customize the run in several ways, as listed below:
 * `--mainnet`: join the Aleph Mainnet instead of the default Testnet
 * `--sync_from_genesis`: by providing this option, you're choosing not to download and use a DB snapshot, but rather perform a full sync
 * `--build_only`: the script will only download and setup everything but will not actually run the binary in case you don't want to join the network yet
-* `--image`: you can provide the name and tag of your own Aleph Node image in case you don't want to use one from the official image repository
 * `--archivist`: (as described above) run the node as an archivist instead of a validator
 * `--name`: (as described above) set the name of the node. If you omit this option, one will be generated for you but it's not encouraged.
-* `--stash_account`: provide `AccountId` of the stash account linked to your validator node. If you run as validator, then this argument is mandatory.
+* `--version`: manually override the version to run. It can be either a git tag like `r-12.1` or a git short commit hash like `ae34eb4213`.
 

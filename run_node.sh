@@ -12,7 +12,7 @@ Help()
 {
     cat <<EOF
 Run the aleph-node as either a validator or an archivist.
-Syntax: $0 [--<name|stash_account> <value>] [--<archivist|mainnet|build_only|sync_from_genesis>] --ip|dns <value>
+Syntax: $0 [--<name> <value>] [--<version> <value>] [--<archivist|mainnet|build_only|sync_from_genesis>] --ip|dns <value>
 
 options:
 archivist         Run the node as an archivist (the default is to run as a validator).
@@ -28,6 +28,7 @@ help              Print this help.
 
 Example usage:
 $0 --name my-aleph-node --ip 123.123.123.123
+$0 --name my-aleph-node --ip 123.123.123.123 --version r-12.1
 
 EOF
 }
