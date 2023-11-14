@@ -28,7 +28,7 @@ help              Print this help.
 
 Example usage:
 $0 --name my-aleph-node --ip 123.123.123.123
-$0 --name my-aleph-node --ip 123.123.123.123 --version r-12.1
+$0 --name my-aleph-node --dns some.domain --version r-12.1
 
 EOF
 }
@@ -42,8 +42,15 @@ get_version () {
     then
         echo ""
         echo -e "Version manually set to ${BGREEN}${VERSION}${NC}."
-        echo -e "Please make sure this is the correct version to run on ${BGREEN}${NETWORK}${NC}."
+        echo -e "Are you sure this is the correct version to run on ${BGREEN}${NETWORK}${NC}? [Y/n]"
         echo ""
+        read -r CONT
+
+        if [[ "$CONT" == 'n' ]]
+        then
+            echo -e "Exiting."
+            exit 0
+        fi
 
         ALEPH_VERSION="${VERSION}"
         return
@@ -122,29 +129,16 @@ get_docker_image () {
 }
 
 run_validator () {
-    if [ -n "${MAINNET}" ]
-    then
-        source env/validator_mainnet
-        eval "echo \"$(cat env/validator_mainnet)\"" > env/validator_mainnet.env
-        ENV_FILE="env/validator_mainnet.env"
-    else
-        source env/validator
-        eval "echo \"$(cat env/validator)\"" > env/validator.env
-        ENV_FILE="env/validator.env"
-    fi
+    source "env/validator_${NETWORK}"
+    eval "echo \"$(cat env/validator_${NETWORK})\"" > "env/validator_${NETWORK}.env"
+    ENV_FILE="env/validator_${NETWORK}.env"
 
     PROXY_PORT=${PROXY_PORT:-$PORT}
     PROXY_VALIDATOR_PORT=${PROXY_VALIDATOR_PORT:-$VALIDATOR_PORT}
 
     # setup public addresses
-    if [[ -n "${PUBLIC_DNS}" ]]
-    then
-        PUBLIC_ADDR="/dns4/${PUBLIC_DNS}/tcp/${PROXY_PORT}"
-        PUBLIC_VALIDATOR_ADDRESS="${PUBLIC_DNS}:${PROXY_VALIDATOR_PORT}"
-    else
-        PUBLIC_ADDR="/ip4/${PUBLIC_IP}/tcp/${PROXY_PORT}"
-        PUBLIC_VALIDATOR_ADDRESS="${PUBLIC_IP}:${PROXY_VALIDATOR_PORT}"
-    fi
+    PUBLIC_ADDR="/${ADDRESS_TYPE}/${NODE_ADDRESS}/tcp/${PROXY_PORT}"
+    PUBLIC_VALIDATOR_ADDRESS="${NODE_ADDRESS}:${PROXY_VALIDATOR_PORT}"
 
     echo -e "Running with public P2P address: ${GREEN}${PUBLIC_ADDR}${NC}"
     echo -e "And validator address: ${GREEN}${PUBLIC_VALIDATOR_ADDRESS}${NC}"
@@ -169,26 +163,12 @@ run_validator () {
 }
 
 run_archivist () {
-    if [ -n "${MAINNET}" ] && [ "${MAINNET}" = 'true' ]
-    then
-        source env/archivist_mainnet
-        eval "echo \"$(cat env/archivist_mainnet)\"" > env/archivist_mainnet.env
-        ENV_FILE="env/archivist_mainnet.env"
-    else
-        source env/archivist
-        eval "echo \"$(cat env/archivist)\"" > env/archivist.env
-        ENV_FILE="env/archivist.env"
-    fi
-
+    source "env/archivist_${NETWORK}"
+    eval "echo \"$(cat env/archivist_${NETWORK})\"" > "env/archivist_${NETWORK}.env"
+    ENV_FILE="env/archivist_${NETWORK}.env"
 
     PROXY_PORT=${PROXY_PORT:-$PORT}
-
-    if [[ -n "${PUBLIC_DNS}" ]]
-    then
-        PUBLIC_ADDR="/dns4/${PUBLIC_DNS}/tcp/${PROXY_PORT}"
-    else
-        PUBLIC_ADDR="/ip4/${PUBLIC_IP}/tcp/${PROXY_PORT}"
-    fi
+    PUBLIC_ADDR="/${ADDRESS_TYPE}/${NODE_ADDRESS}/tcp/${PROXY_PORT}"
 
     echo -e "Running with public P2P address: ${GREEN}${PUBLIC_ADDR}${NC}"
 
@@ -230,10 +210,12 @@ while [[ $# -gt 0 ]]; do
             ARCHIVIST=true
             shift;;
         --ip)
-            PUBLIC_IP="$2"
+            NODE_ADDRESS="$2"
+            ADDRESS_TYPE="ip4"
             shift 2;;
         --dns)
-            PUBLIC_DNS="$2"
+            NODE_ADDRESS="$2"
+            ADDRESS_TYPE="dns4"
             shift 2;;
         -n | --name) # Enter a name
             NAME="$2"
@@ -273,7 +255,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [ -z "${PUBLIC_IP}" ] && [ -z "${PUBLIC_DNS}" ]
+if [ -z "${NODE_ADDRESS}" ]
 then
     echo -e "${RED}You need to provide either a public ip address of your node (--ip) or a public dns address of your node (--dns).${NC}"
     exit 3
