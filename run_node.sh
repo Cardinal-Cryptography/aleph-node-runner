@@ -40,21 +40,21 @@ get_version () {
 
     if [ -n "${VERSION}" ]
     then
+        echo ""
+        echo -e "Version manually set to ${BGREEN}${VERSION}${NC}."
+        echo -e "Please make sure this is the correct version to run on ${BGREEN}${NETWORK}${NC}."
+        echo ""
+
         ALEPH_VERSION="${VERSION}"
         return
     fi
 
-    if  [ -n "${MAINNET}" ]
-    then
-        VERSION_RPC_URL="https://rpc.azero.dev"
-    else
-        VERSION_RPC_URL="https://rpc.test.azero.dev"
-    fi
+    VERSION_URL="https://raw.githubusercontent.com/Cardinal-Cryptography/aleph-node-runner/main/env/version_${NETWORK}"
 
     set +e    # we want to inspect the status of the curl command
 
     # call the RPC endpoint to get the version
-    VERSION_INFO=$(curl -s -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "system_version"}' ${VERSION_RPC_URL})
+    ALEPH_VERSION=$(curl -s ${VERSION_URL})
     if [ 0 -ne $? ]
     then
         echo -e "${RED}Failed to reach the version endpoint.${NC}"
@@ -63,11 +63,6 @@ get_version () {
     fi
 
     set -e
-
-    # use jq to parse the resulting json, get the value of the version field and strip quotes
-    VERSION_INFO=$(echo "${VERSION_INFO}" | docker run --quiet -i "${JQ_IMAGE}" '.result' | tr -d '"')
-    # only return the commit hash that comes after a '-'
-    ALEPH_VERSION=${VERSION_INFO##*-}
 }
 
 check_default_dir () {
@@ -217,6 +212,7 @@ run_archivist () {
 
 # The defaults
 NAME="aleph-node-$(xxd -l "16" -p /dev/urandom | tr -d " \n" ; echo)"
+NETWORK="testnet"
 BASE_PATH="/data"
 HOST_BASE_PATH="${HOME}/.alephzero"
 DB_SNAPSHOT_FILE="db_backup.tar.gz"
@@ -250,6 +246,7 @@ while [[ $# -gt 0 ]]; do
             CHAINSPEC_FILE="mainnet_chainspec.json"
             DB_SNAPSHOT_URL="${MAINNET_DB_SNAPSHOT_URL}"
             MAINNET=true
+            NETWORK="mainnet"
             shift;;
         --version) # Run a specific version of the binary
             VERSION="$2"
@@ -317,7 +314,7 @@ then
 fi
 
 echo ""
-echo -e "${BGREEN}Launched the node!${NC}"
+echo -e "${BGREEN}Launched the ${NETWORK} node!${NC}"
 echo ""
 echo "Please check if the node is running correctly by first running:"
 echo -e "  ${GREEN}docker ps${NC}"
