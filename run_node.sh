@@ -8,6 +8,16 @@ GREEN='\033[0;32m'
 BGREEN='\033[1;32m'
 NC='\033[0m'
 
+function error() {
+    echo -e "\n${RED}$*${NC}"
+    exit 1
+}
+
+function info() {
+    echo -e "${GREEN}$*${NC}"
+}
+
+
 Help()
 {
     cat <<EOF
@@ -38,7 +48,9 @@ get_version () {
     # The version that is returned by the extrinsic looks like: 0.11.4-ae34eb4213
     # so we take the hash part and use it to identify docker images and commits in the repo.
 
-    if [ -n "${VERSION}" ]
+    echo -n "Getting the version...  "
+
+    if [[ -n "${VERSION}" ]]
     then
         echo ""
         echo -e "Version manually set to ${BGREEN}${VERSION}${NC}."
@@ -48,34 +60,33 @@ get_version () {
 
         if [[ "$CONT" == 'n' ]]
         then
-            echo -e "Exiting."
-            exit 0
+            error "Exiting."
         fi
 
         ALEPH_VERSION="${VERSION}"
+        info "OK"
         return
     fi
 
     VERSION_URL="https://raw.githubusercontent.com/Cardinal-Cryptography/aleph-node-runner/main/env/version_${NETWORK}"
 
-    set +e    # we want to inspect the status of the curl command
+    set +e    # we want to inspect the status of the wget command
 
-    # call the RPC endpoint to get the version
-    ALEPH_VERSION=$(curl -s ${VERSION_URL})
-    if [ 0 -ne $? ]
+    # get the version from this repo (but via wget instead of locally)
+    ALEPH_VERSION=$(wget --quiet --output-document - ${VERSION_URL})
+    if [[ 0 -ne $? ]]
     then
-        echo -e "${RED}Failed to reach the version endpoint.${NC}"
-        echo "Please re-run the script, passing the appropriate version with the --version option."
-        exit 2
+        error "Failed to reach the version endpoint.\nPlease re-run the script, passing the appropriate version with the --version option."
     fi
 
     set -e
+    info "OK"
 }
 
 check_default_dir () {
     # Since at some point we moved the data directory out of the repo, we check if the target path exists and,
     # if necessary, move existing data.
-    if [ ! -d "${HOST_BASE_PATH}/${DB_SNAPSHOT_PATH}" ] && [ -d "${DB_SNAPSHOT_PATH}/keystore" ]
+    if [[ ! -d "${HOST_BASE_PATH}/${DB_SNAPSHOT_PATH}" && -d "${DB_SNAPSHOT_PATH}/keystore" ]]
     then
         echo "The default location of the data directory has changed."
         echo "Your files will be copied automatically to ${HOST_BASE_PATH}/${DB_SNAPSHOT_PATH}."
@@ -86,14 +97,13 @@ check_default_dir () {
 
         if [[ "$CONT" == 'n' ]]
         then
-            echo -e "${RED}Please re-run the script, supplying the '--data_dir' argument, exiting.${NC}"
-            exit 0
+            error "Please re-run the script, supplying the '--data_dir' argument, exiting."
         fi
 
         echo "Moving the data from ${DB_SNAPSHOT_PATH} into ${HOST_BASE_PATH}/${DB_SNAPSHOT_PATH}..."
         mkdir -p "${HOST_BASE_PATH}"/${DB_SNAPSHOT_PATH}
         mv ${DB_SNAPSHOT_PATH}/* "${HOST_BASE_PATH}"/${DB_SNAPSHOT_PATH}
-        echo -e "${GREEN}Finished moving the data.${NC}"
+        info "Finished moving the data."
     fi
 }
 
@@ -103,29 +113,51 @@ get_snapshot () {
     DB_SNAPSHOT_PATH=${HOST_BASE_PATH}/${DB_SNAPSHOT_PATH}
     mkdir -p "${DB_SNAPSHOT_PATH}"
 
-    if [ ! -d "${DB_SNAPSHOT_PATH}/db/full" ] && [ -z "$SYNC" ]
+    if [[ ! -d "${DB_SNAPSHOT_PATH}/db/full" && -z "$SYNC_FROM_GENESIS" ]]
     then
-        echo "Downloading the snapshot..."
+        echo -n "Downloading the snapshot...  "
         pushd "${DB_SNAPSHOT_PATH}" > /dev/null
+        
+        set +e
         wget -q -O ${DB_SNAPSHOT_FILE} ${DB_SNAPSHOT_URL}
+        if [[ 0 -ne $? ]]
+        then
+            error "Failed to reach the snapshot endpoint."
+        fi
+        set -e
+        
         tar xvzf ${DB_SNAPSHOT_FILE}
         rm ${DB_SNAPSHOT_FILE}
         popd > /dev/null
+        info "OK"
     fi
 }
 
 get_chainspec () {
     # For testnet and mainnet we get the chainspec from the repo (with the commit identified by the hash we get from System::version RPC call)
-    echo "Downloading the chainspec..."
+    echo -n "Downloading the chainspec...   "
     pushd "${HOST_BASE_PATH}" > /dev/null
-    wget -q -O ${CHAINSPEC_FILE} https://raw.githubusercontent.com/Cardinal-Cryptography/aleph-node/"${ALEPH_VERSION}"/bin/node/src/resources/${CHAINSPEC_FILE}
+    set +e
+    wget --quiet -O ${CHAINSPEC_FILE} https://raw.githubusercontent.com/Cardinal-Cryptography/aleph-node/"${ALEPH_VERSION}"/bin/node/src/resources/${CHAINSPEC_FILE}
+    if [[ 0 -ne $? ]]
+    then
+        error "Failed to reach the chainspec endpoint."
+    fi
+    set -e
     popd > /dev/null
+    info "OK"
 }
 
 get_docker_image () {
-    echo "Pulling docker image..."
+    echo -n "Pulling docker image...  "
     ALEPH_IMAGE=public.ecr.aws/p6e8q1z1/aleph-node:${ALEPH_VERSION:0:7}
     docker pull --quiet "${ALEPH_IMAGE}"
+    if [[ 0 -ne $? ]]
+    then
+        error "Failed to pull the aleph-node docker image."
+    fi
+
+    info "OK"
 }
 
 run_validator () {
@@ -237,7 +269,7 @@ while [[ $# -gt 0 ]]; do
             BUILD_ONLY=true
             shift;;
         --sync_from_genesis)
-            SYNC=true
+            SYNC_FROM_GENESIS=true
             shift;;
         --proxy_port)
             PROXY_PORT=$2
@@ -255,10 +287,9 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [ -z "${NODE_ADDRESS}" ]
+if [[ -z "${NODE_ADDRESS}" ]]
 then
-    echo -e "${RED}You need to provide either a public ip address of your node (--ip) or a public dns address of your node (--dns).${NC}"
-    exit 3
+    error "You need to provide either a public ip address of your node (--ip) or a public dns address of your node (--dns)."
 fi
 
 ### Figure out the version to run
@@ -276,17 +307,18 @@ get_chainspec
 
 get_docker_image
 
-if [ -z "$BUILD_ONLY" ]
+if [[ -z "$BUILD_ONLY" ]]
 then
     echo ""
     echo "Running the node..."
 
     # remove the container if it exists
-    if [ "$(docker ps -aq -f status=exited -f name="${NAME}")" ]; then
+    if [[ "$(docker ps -aq -f status=exited -f name="${NAME}")" ]]
+    then
         docker rm "${NAME}"
     fi
 
-    if [ -z "$ARCHIVIST" ]
+    if [[ -z "$ARCHIVIST" ]]
     then
         run_validator
 
@@ -299,6 +331,6 @@ echo ""
 echo -e "${BGREEN}Launched the ${NETWORK} node!${NC}"
 echo ""
 echo "Please check if the node is running correctly by first running:"
-echo -e "  ${GREEN}docker ps${NC}"
+info "  docker ps"
 echo "And then, if the status is 'Up', inspect the logs by running:"
-echo -e "  ${GREEN}docker logs ${NAME}${NC}"
+info "  docker logs ${NAME}"
