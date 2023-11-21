@@ -60,7 +60,8 @@ get_version () {
 
         if [[ "$CONT" == 'n' ]]
         then
-            error "Exiting."
+            echo "Exiting."
+            exit 0
         fi
 
         ALEPH_VERSION="${VERSION}"
