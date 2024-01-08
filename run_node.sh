@@ -120,15 +120,13 @@ get_snapshot () {
         pushd "${DB_SNAPSHOT_PATH}" > /dev/null
         
         set +e
-        wget -q -O ${DB_SNAPSHOT_FILE} ${DB_SNAPSHOT_URL}
+        wget -q -O - ${DB_SNAPSHOT_URL} | tar xzf -
         if [[ 0 -ne $? ]]
         then
-            error "Failed to reach the snapshot endpoint."
+            error "Failed to download and unpack the snapshot."
         fi
         set -e
         
-        tar xvzf ${DB_SNAPSHOT_FILE}
-        rm ${DB_SNAPSHOT_FILE}
         popd > /dev/null
         info "OK"
     fi
