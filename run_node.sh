@@ -177,15 +177,13 @@ run_validator () {
     PORT_MAP="${PORT}:${PORT}"
     VALIDATOR_PORT_MAP="${VALIDATOR_PORT}":"${VALIDATOR_PORT}"
 
-    # we store the port mapping arguments in an array
-    # this allows us to append the WS_PORT_MAP argument only for Mainnet
-    PORT_ARGS=(-p "${PORT_MAP}" -p "${VALIDATOR_PORT_MAP}" -p "${RPC_PORT_MAP}" -p "${METRICS_PORT_MAP}")
-    [[ -n "${MAINNET}" ]] && PORT_ARGS+=(-p "${WS_PORT_MAP}")
-
     docker run --env-file ${ENV_FILE} \
                 --env PUBLIC_ADDR="${PUBLIC_ADDR}" \
                 --env PUBLIC_VALIDATOR_ADDRESS="${PUBLIC_VALIDATOR_ADDRESS}" \
-                "${PORT_ARGS[@]}" \
+                -p "${PORT_MAP}" \
+                -p "${VALIDATOR_PORT_MAP}" \
+                -p "${RPC_PORT_MAP}" \
+                -p "${METRICS_PORT_MAP}" \
                 -u "$(id -u):$(id -g)" \
                 --mount type=bind,source=${HOST_BASE_PATH},target=${BASE_PATH} \
                 --name "${NAME}" \
@@ -205,14 +203,11 @@ run_archivist () {
 
     PORT_MAP="${PORT}:${PORT}"
 
-    # we store the port mapping arguments in an array
-    # this allows us to append the WS_PORT_MAP argument only for Mainnet
-    PORT_ARGS=(-p "${PORT_MAP}" -p "${RPC_PORT_MAP}" -p "${METRICS_PORT_MAP}")
-    [[ -n "${MAINNET}" ]] && PORT_ARGS+=(-p "${WS_PORT_MAP}")
-
     docker run --env-file ${ENV_FILE} \
                 --env PUBLIC_ADDR="${PUBLIC_ADDR}" \
-                "${PORT_ARGS[@]}" \
+                -p "${PORT_MAP}" \
+                -p "${RPC_PORT_MAP}" \
+                -p "${METRICS_PORT_MAP}" \
                 -u "$(id -u):$(id -g)" \
                 --mount type=bind,source=${HOST_BASE_PATH},target=${BASE_PATH} \
                 --name "${NAME}" \
@@ -290,11 +285,6 @@ if [[ -z "${NODE_ADDRESS}" ]]
 then
     error "You need to provide either a public ip address of your node (--ip) or a public dns address of your node (--dns)."
 fi
-
-### Figure out the version to run
-# Check the external jq image
-JQ_IMAGE='stedolan/jq:latest'
-docker image inspect "${JQ_IMAGE}" > /dev/null && echo -e "JQ image check: ${GREEN}OK${NC}"
 
 get_version
 
