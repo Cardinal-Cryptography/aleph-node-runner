@@ -114,9 +114,7 @@ get_snapshot () {
     DB_SNAPSHOT_PATH=${HOST_BASE_PATH}/${DB_SNAPSHOT_PATH}
     mkdir -p "${DB_SNAPSHOT_PATH}"
 
-    DB_PATH=${DB_PATH:-"paritydb/full"}
-
-    if [[ ! -d "${DB_SNAPSHOT_PATH}/${DB_PATH}" && -z "$SYNC_FROM_GENESIS" ]]
+    if [[ ! -d "${DB_SNAPSHOT_PATH}/paritydb/full" && -z "$SYNC_FROM_GENESIS" ]]
     then
         echo -n "Downloading the snapshot...  "
         pushd "${DB_SNAPSHOT_PATH}" > /dev/null
