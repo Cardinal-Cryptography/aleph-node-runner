@@ -114,7 +114,9 @@ get_snapshot () {
     DB_SNAPSHOT_PATH=${HOST_BASE_PATH}/${DB_SNAPSHOT_PATH}
     mkdir -p "${DB_SNAPSHOT_PATH}"
 
-    if [[ ! -d "${DB_SNAPSHOT_PATH}/paritydb/full" && -z "$SYNC_FROM_GENESIS" ]]
+    DB_PATH=${DB_PATH:-"paritydb/full"}
+
+    if [[ ! -d "${DB_SNAPSHOT_PATH}/${DB_PATH}" && -z "$SYNC_FROM_GENESIS" ]]
     then
         echo -n "Downloading the snapshot...  "
         pushd "${DB_SNAPSHOT_PATH}" > /dev/null
@@ -222,7 +224,8 @@ NETWORK="testnet"
 BASE_PATH="/data"
 HOST_BASE_PATH="${HOME}/.alephzero"
 DB_SNAPSHOT_URL="http://db.test.azero.dev.s3-website.eu-central-1.amazonaws.com/latest-parity-pruned.html"
-MAINNET_DB_SNAPSHOT_URL="http://db.azero.dev.s3-website.eu-central-1.amazonaws.com/latest-parity-pruned.html"
+MAINNET_DB_SNAPSHOT_URL="http://db.azero.dev.s3-website.eu-central-1.amazonaws.com/latest.html"
+MAINNET_DB_PATH=${MAINNET_DB_PATH:-"db/full"}
 DB_SNAPSHOT_PATH="chains/testnet/"     # testnet by default
 CHAINSPEC_FILE="testnet_chainspec.json"
 
@@ -252,6 +255,7 @@ while [[ $# -gt 0 ]]; do
             DB_SNAPSHOT_PATH="chains/mainnet/"
             CHAINSPEC_FILE="mainnet_chainspec.json"
             DB_SNAPSHOT_URL="${MAINNET_DB_SNAPSHOT_URL}"
+            DB_PATH="${MAINNET_DB_PATH}"
             MAINNET=true
             NETWORK="mainnet"
             shift;;
