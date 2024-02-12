@@ -114,11 +114,13 @@ get_snapshot () {
     DB_SNAPSHOT_PATH=${HOST_BASE_PATH}/${DB_SNAPSHOT_PATH}
     mkdir -p "${DB_SNAPSHOT_PATH}"
 
-    if [[ ! -d "${DB_SNAPSHOT_PATH}/db/full" && -z "$SYNC_FROM_GENESIS" ]]
+    DB_PATH=${DB_PATH:-"paritydb/full"}
+
+    if [[ ! -d "${DB_SNAPSHOT_PATH}/${DB_PATH}" && -z "$SYNC_FROM_GENESIS" ]]
     then
         echo -n "Downloading the snapshot...  "
         pushd "${DB_SNAPSHOT_PATH}" > /dev/null
-        
+
         set +e
         wget -q -O - ${DB_SNAPSHOT_URL} | tar xzf -
         if [[ 0 -ne $? ]]
@@ -126,7 +128,7 @@ get_snapshot () {
             error "Failed to download and unpack the snapshot."
         fi
         set -e
-        
+
         popd > /dev/null
         info "OK"
     fi
@@ -221,9 +223,8 @@ NAME="aleph-node-$(xxd -l "16" -p /dev/urandom | tr -d " \n" ; echo)"
 NETWORK="testnet"
 BASE_PATH="/data"
 HOST_BASE_PATH="${HOME}/.alephzero"
-DB_SNAPSHOT_FILE="db_backup.tar.gz"
-DB_SNAPSHOT_URL="http://db.test.azero.dev.s3-website.eu-central-1.amazonaws.com/latest.html"
-MAINNET_DB_SNAPSHOT_URL="http://db.azero.dev.s3-website.eu-central-1.amazonaws.com/latest.html"
+DB_SNAPSHOT_URL="http://db.test.azero.dev.s3-website.eu-central-1.amazonaws.com/latest-parity-pruned.html"
+MAINNET_DB_SNAPSHOT_URL="http://db.azero.dev.s3-website.eu-central-1.amazonaws.com/latest-parity-pruned.html"
 DB_SNAPSHOT_PATH="chains/testnet/"     # testnet by default
 CHAINSPEC_FILE="testnet_chainspec.json"
 
