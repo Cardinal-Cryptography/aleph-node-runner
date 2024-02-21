@@ -301,21 +301,23 @@ get_docker_image
 
 if [[ -z "$BUILD_ONLY" ]]
 then
-    echo ""
-    echo "Running the node..."
-
     # stop the container if it's running
     if [[ "$(docker ps -aq -f status=running -f name="${NAME}")" ]]
     then
-        docker stop "${NAME}"
+        echo -n "Stopping the container... "
+        docker stop "${NAME}" > /dev/null
+        info "OK"
     fi
 
     # remove the container if it exists
     if [[ "$(docker ps -aq -f status=exited -f name="${NAME}")" ]]
     then
-        docker rm "${NAME}"
+        echo -n "Removing the container... "
+        docker rm "${NAME}" > /dev/null
+        info "OK"
     fi
 
+    echo "Running the container..."
     if [[ -z "$ARCHIVIST" ]]
     then
         run_validator
