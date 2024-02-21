@@ -304,6 +304,12 @@ then
     echo ""
     echo "Running the node..."
 
+    # stop the container if it's running
+    if [[ "$(docker ps -aq -f status=running -f name="${NAME}")" ]]
+    then
+        docker stop "${NAME}"
+    fi
+
     # remove the container if it exists
     if [[ "$(docker ps -aq -f status=exited -f name="${NAME}")" ]]
     then
