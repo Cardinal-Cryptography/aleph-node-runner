@@ -43,6 +43,12 @@ $0 --name my-aleph-node --dns some.domain --version r-12.1
 EOF
 }
 
+prepare_directories() {
+    mkdir -p "${HOST_BASE_PATH}"
+    CHAIN_DATA_DIR=${HOST_BASE_PATH}/${CHAIN_DATA_DIR}
+    mkdir -p "${CHAIN_DATA_DIR}"
+}
+
 get_version () {
     # In case of testnet and mainnet, we get the version by making the System::version RPC call.
     # The version that is returned by the extrinsic looks like: 0.11.4-ae34eb4213
@@ -55,7 +61,6 @@ get_version () {
         echo ""
         echo -e "Version manually set to ${BGREEN}${VERSION}${NC}."
         echo -e "Are you sure this is the correct version to run on ${BGREEN}${NETWORK}${NC}? [Y/n]"
-        echo ""
         read -r CONT
 
         if [[ "$CONT" == 'n' ]]
@@ -84,49 +89,23 @@ get_version () {
     info "OK"
 }
 
-check_default_dir () {
-    # Since at some point we moved the data directory out of the repo, we check if the target path exists and,
-    # if necessary, move existing data.
-    if [[ ! -d "${HOST_BASE_PATH}/${DB_SNAPSHOT_PATH}" && -d "${DB_SNAPSHOT_PATH}/keystore" ]]
-    then
-        echo "The default location of the data directory has changed."
-        echo "Your files will be copied automatically to ${HOST_BASE_PATH}/${DB_SNAPSHOT_PATH}."
-        echo "If you wish to customize the directory, select 'n' and re-run the script"
-        echo "with the '--data_dir' argument."
-        echo "Do you want to continue? [Y/n]"
-        read -r CONT
-
-        if [[ "$CONT" == 'n' ]]
-        then
-            error "Please re-run the script, supplying the '--data_dir' argument, exiting."
-        fi
-
-        echo "Moving the data from ${DB_SNAPSHOT_PATH} into ${HOST_BASE_PATH}/${DB_SNAPSHOT_PATH}..."
-        mkdir -p "${HOST_BASE_PATH}"/${DB_SNAPSHOT_PATH}
-        mv ${DB_SNAPSHOT_PATH}/* "${HOST_BASE_PATH}"/${DB_SNAPSHOT_PATH}
-        info "Finished moving the data."
-    fi
-}
-
 get_snapshot () {
     # If the snapshot doesn't exist, we download it from the specified path.
-    mkdir -p "${HOST_BASE_PATH}"
-    DB_SNAPSHOT_PATH=${HOST_BASE_PATH}/${DB_SNAPSHOT_PATH}
-    mkdir -p "${DB_SNAPSHOT_PATH}"
+    DB_PATH=${DB_PATH:-"paritydb/full"}
 
-    if [[ ! -d "${DB_SNAPSHOT_PATH}/db/full" && -z "$SYNC_FROM_GENESIS" ]]
+    if [[ ! -d "${CHAIN_DATA_DIR}/${DB_PATH}" && -z "$SYNC_FROM_GENESIS" ]]
     then
         echo -n "Downloading the snapshot...  "
-        pushd "${DB_SNAPSHOT_PATH}" > /dev/null
-        
+        pushd "${CHAIN_DATA_DIR}" > /dev/null
+
         set +e
-        wget -q -O - ${DB_SNAPSHOT_URL} | tar xzf -
+        wget -q -O - "${DB_SNAPSHOT_URL}" | tar xzf -
         if [[ 0 -ne $? ]]
         then
             error "Failed to download and unpack the snapshot."
         fi
         set -e
-        
+
         popd > /dev/null
         info "OK"
     fi
@@ -221,10 +200,10 @@ NAME="aleph-node-$(xxd -l "16" -p /dev/urandom | tr -d " \n" ; echo)"
 NETWORK="testnet"
 BASE_PATH="/data"
 HOST_BASE_PATH="${HOME}/.alephzero"
-DB_SNAPSHOT_FILE="db_backup.tar.gz"
-DB_SNAPSHOT_URL="http://db.test.azero.dev.s3-website.eu-central-1.amazonaws.com/latest.html"
-MAINNET_DB_SNAPSHOT_URL="http://db.azero.dev.s3-website.eu-central-1.amazonaws.com/latest.html"
-DB_SNAPSHOT_PATH="chains/testnet/"     # testnet by default
+DB_SNAPSHOT_URL=${DB_SNAPSHOT_URL:-"http://db.test.azero.dev.s3-website.eu-central-1.amazonaws.com/latest-parity-pruned.html"}
+MAINNET_DB_SNAPSHOT_URL=${MAINNET_DB_SNAPSHOT_URL:-"http://db.azero.dev.s3-website.eu-central-1.amazonaws.com/latest.html"}
+MAINNET_DB_PATH=${MAINNET_DB_PATH:-"db/full"}
+CHAIN_DATA_DIR="chains/testnet"     # testnet by default
 CHAINSPEC_FILE="testnet_chainspec.json"
 
 while [[ $# -gt 0 ]]; do
@@ -250,10 +229,10 @@ while [[ $# -gt 0 ]]; do
             HOST_BASE_PATH="$2"
             shift 2;;
         --mainnet) # Join the mainnet
-            DB_SNAPSHOT_PATH="chains/mainnet/"
+            CHAIN_DATA_DIR="chains/mainnet"
             CHAINSPEC_FILE="mainnet_chainspec.json"
             DB_SNAPSHOT_URL="${MAINNET_DB_SNAPSHOT_URL}"
-            MAINNET=true
+            DB_PATH="${MAINNET_DB_PATH}"
             NETWORK="mainnet"
             shift;;
         --version) # Run a specific version of the binary
@@ -286,9 +265,9 @@ then
     error "You need to provide either a public ip address of your node (--ip) or a public dns address of your node (--dns)."
 fi
 
-get_version
+prepare_directories
 
-check_default_dir
+get_version
 
 get_snapshot
 
@@ -298,15 +277,23 @@ get_docker_image
 
 if [[ -z "$BUILD_ONLY" ]]
 then
-    echo ""
-    echo "Running the node..."
+    # stop the container if it's running
+    if [[ "$(docker ps -aq -f status=running -f name="${NAME}")" ]]
+    then
+        echo -n "Stopping the container... "
+        docker stop "${NAME}" > /dev/null
+        info "OK"
+    fi
 
     # remove the container if it exists
     if [[ "$(docker ps -aq -f status=exited -f name="${NAME}")" ]]
     then
-        docker rm "${NAME}"
+        echo -n "Removing the container... "
+        docker rm "${NAME}" > /dev/null
+        info "OK"
     fi
 
+    echo "Running the container..."
     if [[ -z "$ARCHIVIST" ]]
     then
         run_validator
@@ -323,3 +310,10 @@ echo "Please check if the node is running correctly by first running:"
 info "  docker ps"
 echo "And then, if the status is 'Up', inspect the logs by running:"
 info "  docker logs ${NAME}"
+
+if [[ -d "${CHAIN_DATA_DIR}/db" && -d "${CHAIN_DATA_DIR}/paritydb" ]]
+then
+    echo ""
+    echo "You can now remove the old (non-pruned) database by running:"
+    info "  rm -rf ${CHAIN_DATA_DIR}/db"
+fi
