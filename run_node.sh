@@ -128,7 +128,7 @@ get_chainspec () {
 
 get_docker_image () {
     echo -n "Pulling docker image...  "
-    ALEPH_IMAGE=public.ecr.aws/p6e8q1z1/aleph-node:${ALEPH_VERSION:0:7}
+    ALEPH_IMAGE=${ALEPH_IMAGE_NAME}:${ALEPH_VERSION:0:7}
     docker pull --quiet "${ALEPH_IMAGE}"
     if [[ 0 -ne $? ]]
     then
@@ -136,6 +136,29 @@ get_docker_image () {
     fi
 
     info "OK"
+}
+
+shutdown_other_aleph_containers() {
+    for image in $(docker image ls -q -f reference=${ALEPH_IMAGE_NAME}); do
+        for container in $(docker ps -aq -f ancestor="${image}"); do
+
+            # stop the container if it's running
+            if [[ "$(docker ps -aq -f id="${container}")" && -z "$(docker ps -aq -f status=exited -f id="${container}")" ]]
+            then
+                echo -n "Stopping the container ${container}... "
+                docker stop "${container}" > /dev/null
+                info "OK"
+            fi
+
+            # remove the container if it exists
+            if [[ "$(docker ps -aq -f status=exited -f id="${container}")" ]]
+            then
+                echo -n "Removing the container ${container}... "
+                docker rm "${container}" > /dev/null
+                info "OK"
+            fi
+        done
+    done
 }
 
 run_validator () {
@@ -205,6 +228,7 @@ MAINNET_DB_SNAPSHOT_URL=${MAINNET_DB_SNAPSHOT_URL:-"http://db.azero.dev.s3-websi
 MAINNET_DB_PATH=${MAINNET_DB_PATH:-"db/full"}
 CHAIN_DATA_DIR="chains/testnet"     # testnet by default
 CHAINSPEC_FILE="testnet_chainspec.json"
+ALEPH_IMAGE_NAME=public.ecr.aws/p6e8q1z1/aleph-node
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -277,21 +301,7 @@ get_docker_image
 
 if [[ -z "$BUILD_ONLY" ]]
 then
-    # stop the container if it's running
-    if [[ "$(docker ps -aq -f status=running -f name="${NAME}")" ]]
-    then
-        echo -n "Stopping the container... "
-        docker stop "${NAME}" > /dev/null
-        info "OK"
-    fi
-
-    # remove the container if it exists
-    if [[ "$(docker ps -aq -f status=exited -f name="${NAME}")" ]]
-    then
-        echo -n "Removing the container... "
-        docker rm "${NAME}" > /dev/null
-        info "OK"
-    fi
+    shutdown_other_aleph_containers
 
     echo "Running the container..."
     if [[ -z "$ARCHIVIST" ]]
