@@ -22,7 +22,7 @@ Help()
 {
     cat <<EOF
 Run the aleph-node as either a validator or an archivist.
-Syntax: $0 [--<name> <value>] [--<version> <value>] [--<archivist|mainnet|build_only|sync_from_genesis>] --ip|dns <value>
+Syntax: $0 [--<name> <value>] [--<version> <value>] [--<archivist|mainnet|keep_containers|build_only|sync_from_genesis>] --ip|dns <value>
 
 options:
 archivist         Run the node as an archivist (the default is to run as a validator).
@@ -31,6 +31,7 @@ dns               The public DNS of your node.
 n | name          Set the node's name.
 d | data_dir      Specify the directory where all the chain data will be stored (default: ~/.alephzero).
 mainnet           Join the mainnet (by default the script will join testnet).
+keep_containers   Don't stop existing aleph-node containers.
 version           Manually override the version to run (accepts a git tag or a short git commit hash).
 build_only        Do not run after the setup.
 sync_from_genesis Perform a full sync instead of downloading the backup.
@@ -95,11 +96,11 @@ get_snapshot () {
 
     if [[ ! -d "${CHAIN_DATA_DIR}/${DB_PATH}" && -z "$SYNC_FROM_GENESIS" ]]
     then
-        echo -n "Downloading the snapshot...  "
+        echo "Downloading the snapshot...  "
         pushd "${CHAIN_DATA_DIR}" > /dev/null
 
         set +e
-        wget -q -O - "${DB_SNAPSHOT_URL}" | tar xzf -
+        wget -q --show-progress -O - "${DB_SNAPSHOT_URL}" | tar xzf -
         if [[ 0 -ne $? ]]
         then
             error "Failed to download and unpack the snapshot."
@@ -113,10 +114,10 @@ get_snapshot () {
 
 get_chainspec () {
     # For testnet and mainnet we get the chainspec from the repo (with the commit identified by the hash we get from System::version RPC call)
-    echo -n "Downloading the chainspec...   "
+    echo "Downloading the chainspec...   "
     pushd "${HOST_BASE_PATH}" > /dev/null
     set +e
-    wget --quiet -O ${CHAINSPEC_FILE} https://raw.githubusercontent.com/Cardinal-Cryptography/aleph-node/"${ALEPH_VERSION}"/bin/node/src/resources/${CHAINSPEC_FILE}
+    wget --quiet --show-progress -O ${CHAINSPEC_FILE} https://raw.githubusercontent.com/Cardinal-Cryptography/aleph-node/"${ALEPH_VERSION}"/bin/node/src/resources/${CHAINSPEC_FILE}
     if [[ 0 -ne $? ]]
     then
         error "Failed to reach the chainspec endpoint."
@@ -262,6 +263,9 @@ while [[ $# -gt 0 ]]; do
         --version) # Run a specific version of the binary
             VERSION="$2"
             shift 2;;
+        --keep_containers) #) Don't stop or remove any containers
+            KEEP_CONTAINERS=true
+            shift;;
         --build_only)
             BUILD_ONLY=true
             shift;;
@@ -301,7 +305,10 @@ get_docker_image
 
 if [[ -z "$BUILD_ONLY" ]]
 then
-    shutdown_other_aleph_containers
+    if [[ -z "$KEEP_CONTAINERS" ]]
+    then
+        shutdown_other_aleph_containers
+    fi
 
     echo "Running the container..."
     if [[ -z "$ARCHIVIST" ]]
