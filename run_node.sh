@@ -129,7 +129,7 @@ get_chainspec () {
 
 get_docker_image () {
     echo -n "Pulling docker image...  "
-    ALEPH_IMAGE=${ALEPH_IMAGE_NAME}:${ALEPH_VERSION:0:7}
+    ALEPH_IMAGE=${ALEPH_IMAGE_NAME}:${ALEPH_VERSION}
     docker pull --quiet "${ALEPH_IMAGE}"
     if [[ 0 -ne $? ]]
     then
