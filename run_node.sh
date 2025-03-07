@@ -75,7 +75,7 @@ get_version () {
         return
     fi
 
-    VERSION_URL="https://raw.githubusercontent.com/Cardinal-Cryptography/aleph-node-runner/main/env/version_${NETWORK}"
+    VERSION_URL="https://rest.azero.dev/${NETWORK}-version"
 
     set +e    # we want to inspect the status of the wget command
 
