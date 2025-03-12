@@ -16,7 +16,6 @@ function error() {
 
 function warn() {
     echo -e "\n${YELLOW}$*${NC}"
-    exit 1
 }
 
 function info() {
