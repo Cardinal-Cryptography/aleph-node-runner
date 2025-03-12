@@ -105,9 +105,10 @@ set_db_engine () {
          warn "You are running with paritydb as your database, we currently recommend rocksdb."
          echo "You can switch to rocksdb by adding '--database_engine rocksdb' to the arguments of this script. Note that it might take up to an hour to download a new DB snapshot and sync it."
          echo "If you explicitly prefer paritydb add '--database_engine paritydb' to the arguments of this script to silence this warning."
+         DB_ENGINE="paritydb"
         else
          info "No database engine explicitly set, defaulting to rocksdb."
-         DB_ENGINE="rocksDB"
+         DB_ENGINE="rocksdb"
         fi
     fi
     case "${DB_ENGINE}" in
