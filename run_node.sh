@@ -4,6 +4,7 @@ set -eo pipefail
 
 # for coloring the output
 RED='\033[0;31m'
+YELLOW='\033[0;33m'
 GREEN='\033[0;32m'
 BGREEN='\033[1;32m'
 NC='\033[0m'
@@ -11,6 +12,10 @@ NC='\033[0m'
 function error() {
     echo -e "\n${RED}$*${NC}"
     exit 1
+}
+
+function warn() {
+    echo -e "\n${YELLOW}$*${NC}"
 }
 
 function info() {
@@ -34,6 +39,7 @@ mainnet           Join the mainnet (by default the script will join testnet).
 keep_containers   Don't stop existing aleph-node containers.
 version           Manually override the version to run (accepts a git tag or a short git commit hash).
 build_only        Do not run after the setup.
+database_engine   Pick a specific database engine, either paritydb or rocksdb. Defaults to the latter, unless it finds an existing instance of paritydb.
 sync_from_genesis Perform a full sync instead of downloading the backup.
 help              Print this help.
 
@@ -90,9 +96,37 @@ get_version () {
     info "OK"
 }
 
+set_db_engine () {
+    if [[ -z ${DB_ENGINE} ]]
+    then
+        if [[ -d "${CHAIN_DATA_DIR}/${PARITY_DB_PATH}" ]]
+        then
+         warn "You are running with paritydb as your database, we currently recommend rocksdb."
+         echo "You can switch to rocksdb by adding '--database_engine rocksdb' to the arguments of this script. Note that it might take up to an hour to download a new DB snapshot and sync it."
+         echo "If you explicitly prefer paritydb add '--database_engine paritydb' to the arguments of this script to silence this warning."
+         DB_ENGINE="paritydb"
+        else
+         info "No database engine explicitly set, defaulting to rocksdb."
+         DB_ENGINE="rocksdb"
+        fi
+    fi
+    case "${DB_ENGINE}" in
+        paritydb)
+            DB_PATH="${PARITY_DB_PATH}"
+            SNAPSHOT_NAME="latest-parity-pruned.html"
+            ;;
+        rocksdb)
+            DB_PATH="${ROCKS_DB_PATH}"
+            SNAPSHOT_NAME="latest-rocksdb-pruned.html"
+            ;;
+        *)
+            error "Unknown DB engine: ${DB_ENGINE}."
+            exit;;
+    esac
+}
+
 get_snapshot () {
-    # If the snapshot doesn't exist, we download it from the specified path.
-    DB_PATH=${DB_PATH:-"paritydb/full"}
+    set_db_engine
 
     if [[ ! -d "${CHAIN_DATA_DIR}/${DB_PATH}" && -z "$SYNC_FROM_GENESIS" ]]
     then
@@ -100,7 +134,7 @@ get_snapshot () {
         pushd "${CHAIN_DATA_DIR}" > /dev/null
 
         set +e
-        wget -q --show-progress -O - "${DB_SNAPSHOT_URL}" | tar xzf -
+        wget -q --show-progress -O - "${DB_SNAPSHOT_URL}${SNAPSHOT_NAME}" | tar xzf -
         if [[ 0 -ne $? ]]
         then
             error "Failed to download and unpack the snapshot."
@@ -219,14 +253,15 @@ run_archivist () {
 }
 
 
-# The defaults
+# The defaults and other constants.
 NAME="aleph-node-$(xxd -l "16" -p /dev/urandom | tr -d " \n" ; echo)"
 NETWORK="testnet"
 BASE_PATH="/data"
+PARITY_DB_PATH="paritydb/full"
+ROCKS_DB_PATH="db/full"
 HOST_BASE_PATH="${HOME}/.alephzero"
-DB_SNAPSHOT_URL=${DB_SNAPSHOT_URL:-"http://db.test.azero.dev.s3-website.eu-central-1.amazonaws.com/latest-parity-pruned.html"}
-MAINNET_DB_SNAPSHOT_URL=${MAINNET_DB_SNAPSHOT_URL:-"http://db.azero.dev.s3-website.eu-central-1.amazonaws.com/latest-parity-pruned.html"}
-MAINNET_DB_PATH=${MAINNET_DB_PATH:-"paritydb/full"}
+DB_SNAPSHOT_URL=${DB_SNAPSHOT_URL:-"http://db.test.azero.dev.s3-website.eu-central-1.amazonaws.com/"}
+MAINNET_DB_SNAPSHOT_URL=${MAINNET_DB_SNAPSHOT_URL:-"http://db.azero.dev.s3-website.eu-central-1.amazonaws.com/"}
 CHAIN_DATA_DIR="chains/testnet"     # testnet by default
 CHAINSPEC_FILE="testnet_chainspec.json"
 ALEPH_IMAGE_NAME=public.ecr.aws/p6e8q1z1/aleph-node
@@ -257,7 +292,6 @@ while [[ $# -gt 0 ]]; do
             CHAIN_DATA_DIR="chains/mainnet"
             CHAINSPEC_FILE="mainnet_chainspec.json"
             DB_SNAPSHOT_URL="${MAINNET_DB_SNAPSHOT_URL}"
-            DB_PATH="${MAINNET_DB_PATH}"
             NETWORK="mainnet"
             shift;;
         --version) # Run a specific version of the binary
@@ -277,6 +311,9 @@ while [[ $# -gt 0 ]]; do
             shift 2;;
         --proxy_validator_port)
             PROXY_VALIDATOR_PORT=$2
+            shift 2;;
+        --database_engine)
+            DB_ENGINE=$2
             shift 2;;
         -* )
             echo "Warning: unrecognized option: $1"
@@ -328,9 +365,15 @@ info "  docker ps"
 echo "And then, if the status is 'Up', inspect the logs by running:"
 info "  docker logs ${NAME}"
 
-if [[ -d "${CHAIN_DATA_DIR}/db" && -d "${CHAIN_DATA_DIR}/paritydb" ]]
+if [[ -d "${CHAIN_DATA_DIR}/${PARITY_DB_PATH}" && -d "${CHAIN_DATA_DIR}/${ROCKS_DB_PATH}" ]]
 then
     echo ""
-    echo "You can now remove the old (non-pruned) database by running:"
-    info "  rm -rf ${CHAIN_DATA_DIR}/db"
+				warn "You have two copies of the database on your filesystem."
+    echo "You can remove the old (unnecessary) database by running:"
+    if [[ "${DB_ENGINE}" == "paritydb" ]]
+    then
+        info "  rm -rf ${CHAIN_DATA_DIR}/${ROCKS_DB_PATH}"
+    else
+        info "  rm -rf ${CHAIN_DATA_DIR}/${PARITY_DB_PATH}"
+    fi
 fi
