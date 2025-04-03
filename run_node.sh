@@ -113,11 +113,11 @@ set_db_engine () {
     case "${DB_ENGINE}" in
         paritydb)
             DB_PATH="${PARITY_DB_PATH}"
-            SNAPSHOT_NAME="latest-parity-pruned.html"
+            SNAPSHOT_NAME="paritydb-pruned.html"
             ;;
         rocksdb)
             DB_PATH="${ROCKS_DB_PATH}"
-            SNAPSHOT_NAME="latest-rocksdb-pruned.html"
+            SNAPSHOT_NAME="rocksdb-pruned.html"
             ;;
         *)
             error "Unknown DB engine: ${DB_ENGINE}."
@@ -260,8 +260,8 @@ BASE_PATH="/data"
 PARITY_DB_PATH="paritydb/full"
 ROCKS_DB_PATH="db/full"
 HOST_BASE_PATH="${HOME}/.alephzero"
-DB_SNAPSHOT_URL=${DB_SNAPSHOT_URL:-"http://db.test.azero.dev.s3-website.eu-central-1.amazonaws.com/"}
-MAINNET_DB_SNAPSHOT_URL=${MAINNET_DB_SNAPSHOT_URL:-"http://db.azero.dev.s3-website.eu-central-1.amazonaws.com/"}
+DB_SNAPSHOT_URL=${DB_SNAPSHOT_URL:-"https://azero-snapshots.dev/testnet/"}
+MAINNET_DB_SNAPSHOT_URL=${MAINNET_DB_SNAPSHOT_URL:-"https://azero-snapshots.dev/mainnet/"}
 CHAIN_DATA_DIR="chains/testnet"     # testnet by default
 CHAINSPEC_FILE="testnet_chainspec.json"
 ALEPH_IMAGE_NAME=public.ecr.aws/p6e8q1z1/aleph-node
